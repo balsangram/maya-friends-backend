@@ -1,0 +1,41 @@
+import express from "express";
+
+import corsMiddleware from "./middlewares/cors.middleware.js";
+import authRoutes from "./routes/auth.routes.js";
+import adminRoutes from "./routes/admin.routes.js";
+import userRoutes from "./routes/user.routes.js";
+import friendRoutes from "./routes/friend.routes.js";
+import chatRoutes from "./routes/chat.routes.js";
+
+const app = express();
+
+/* ==============================
+   Global Middleware
+============================== */
+
+app.use(corsMiddleware);
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+
+/* ==============================
+   Health Check
+============================== */
+
+app.get("/", (req, res) => {
+  res.json({
+    success: true,
+    message: "Maya Friends API is running",
+  });
+});
+
+/* ==============================
+   API Routes
+============================== */
+
+app.use("/api/auth", authRoutes);
+app.use("/api/user", userRoutes);
+app.use("/api/admin", adminRoutes);
+app.use("/api/friends", friendRoutes);
+app.use("/api/chat", chatRoutes);
+
+export default app;
