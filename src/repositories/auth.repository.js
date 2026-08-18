@@ -1,4 +1,5 @@
 import Auth from "../models/auth.models.js";
+import Otp from "../models/otp.model.js";
 import User from "../models/user.model.js";
 import { comparePassword } from "../utils/password.js";
 
@@ -200,7 +201,10 @@ export const logoutUserRepository = async (userId, fcmToken, refreshToken) => {
 };
 
 export const findUserRepository = async (userId) => {
-  return await Auth.findById(userId);
+  console.log("findUserRepository userId:", userId);
+  const user = await Auth.findById(userId);
+  console.log("findUserRepository user:", user);
+  return user;
 };
 
 export const updatePassword = async (userId, newPassword) => {
@@ -225,3 +229,42 @@ export const isPasswordValidRepository = async (oldPassword, userId) => {
 
   return await comparePassword(oldPassword, user.password);
 };
+
+export const updatePasswordRepository = async (userId, hashedPassword) => { 
+  console.log("updatePasswordRepository called with:", { userId, hashedPassword });
+ return await Auth.findByIdAndUpdate(
+    userId,
+    {
+      $set: {
+        password: hashedPassword,
+      },
+    },
+    {
+      new: true,
+    }
+  );  
+}
+
+export const updateOtpRepository = async (userId, otp) => {
+  const expiresAt = new Date(Date.now() + 5 * 60 * 1000); // OTP expires in 5 minutes
+
+  return await Otp.findOneAndUpdate(
+    { userId },
+    {
+      $set: {
+        otp,
+        expiresAt,
+        verified: false,
+        attempts: 0,
+      },
+    },
+    {
+      new: true,
+      upsert: true, // Create a new document if it doesn't exist
+    }
+  );
+}
+
+export const findUserOtpRepository = async (userId) => {
+  return await Otp.findOne({ userId });
+}

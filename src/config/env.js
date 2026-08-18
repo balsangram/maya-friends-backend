@@ -14,6 +14,8 @@ ADMIN_EMAIL: process.env.ADMIN_EMAIL  ,
 ADMIN_PASSWORD: process.env.ADMIN_PASSWORD ,
 SOCKET_URL: process.env.SOCKET_URL ,
 SOCKET_CORS_ORIGIN: process.env.SOCKET_CORS_ORIGIN ,
+EMAIL_USER: process.env.EMAIL_USER,
+EMAIL_PASSWORD: process.env.EMAIL_PASSWORD,
 }
 
 export default env;
