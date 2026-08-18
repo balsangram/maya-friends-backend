@@ -100,7 +100,7 @@ export const verifyOtp = asyncHandler(async (req, res) => {
  return successResponse(
   res,
   "OTP verified successfully",
-  null,
+  userId,
   200
  )
 });
