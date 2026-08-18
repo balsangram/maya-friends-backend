@@ -1,5 +1,5 @@
 import asyncHandler from "../utils/asyncHandler.js";
-import { loginUserService, registerUserService } from "../services/auth.service.js";
+import { changePasswordService, forgotPasswordService, loginUserService, logoutUserService, registerUserService } from "../services/auth.service.js";
 import { successResponse } from "../utils/response.js";
 
 export const register = asyncHandler(async (req, res) => {
@@ -47,19 +47,44 @@ export const login = asyncHandler(async (req, res) => {
 });
 
 export const logout = asyncHandler(async (req, res) => {
-  // Implementation for logout
+   const userId = req.user.id;
+   const {fcmToken} = req.body;
+    const user = await logoutUserService({userId ,fcmToken ,refreshToken});
+   return successResponse(
+    res,
+    "User logged out successfully",
+    user,
+    200
+   )
+
 });
 
 export const forgotPassword = asyncHandler(async (req, res) => {
-  // Implementation for forgot password
+  const {userId , newPassword} = req.body;
+  await forgotPasswordService({userId, newPassword});
+  return successResponse(
+    res,
+    "Password changed successfully",
+    null,
+    200
+  );
 });
 
 export const changePassword = asyncHandler(async (req, res) => {
-  // Implementation for change password
+ const user = req.user.id;
+ const {oldPassword , newPassword} = req.body;
+  await changePasswordService({user,oldPassword , newPassword})
+ return successResponse(
+  res,
+  "Change password successfully",
+  null,
+  200
+ )
 });
 
 export const sendOtp = asyncHandler(async (req, res) => {
-  // Implementation for send OTP
+  const {email} = req.body;
+  
 });
 
 export const verifyOtp = asyncHandler(async (req, res) => {

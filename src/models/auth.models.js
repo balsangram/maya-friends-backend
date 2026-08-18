@@ -2,9 +2,13 @@ import mongoose from "mongoose";
 
 const authSchema = new mongoose.Schema(
   {
+    // ==============================
+    // Common fields
+    // ==============================
+
     name: {
       type: String,
-      required: true,
+      required: false,
       trim: true,
     },
 
@@ -31,6 +35,30 @@ const authSchema = new mongoose.Schema(
       type: String,
       default: null,
     },
+
+    // ==============================
+    // Authentication
+    // ==============================
+
+    refreshToken: {
+      type: String,
+      default: null,
+      select: false,
+    },
+
+    // ==============================
+    // Firebase / Push Notification
+    // ==============================
+
+    fcmToken: {
+      type: String,
+      default: null,
+      select: false,
+    },
+
+    // ==============================
+    // Account status
+    // ==============================
 
     isActive: {
       type: Boolean,

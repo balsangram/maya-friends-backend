@@ -1,4 +1,4 @@
-import Auth from "./auth.model.js";
+import Auth from "./auth.models.js";
 
 const userSchema = new Auth.base.Schema({
   username: {
