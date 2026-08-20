@@ -1,13 +1,26 @@
 import { addFriendRepository, blockFriendRepository, displayAllFriendsRepository, findUserByIdRepository, unfriendRepository } from "../repositories/friends.repository.js";
 
-export const displayAllFriendsService = async (userId) => {
-  const friends = await displayAllFriendsRepository(userId);
+export const displayAllFriendsService = async (
+  userId,
+  search,
+  blockUser,
+  skip,
+  limit
+) => {
+  const result = await displayAllFriendsRepository(
+    userId,
+    search,
+    blockUser,
+    skip,
+    limit
+  );
 
-  return friends?.friends || [];
+  return result;
 };
-
 export const addFriendService = async (userId, friendId) => {
   const friendUser = await findUserByIdRepository(friendId);
+
+  console.log(friendUser, "friendUser");
 
   if (!friendUser) {
     throw new Error("Friend user not found");
@@ -15,9 +28,7 @@ export const addFriendService = async (userId, friendId) => {
 
   const friends = await addFriendRepository(
     userId,
-    friendUser._id,
-    friendUser.name,
-    friendUser.image
+    friendUser._id
   );
 
   return friends;

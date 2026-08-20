@@ -8,17 +8,6 @@ const friendType = new mongoose.Schema(
       required: true,
     },
 
-    name: {
-      type: String,
-      required: true,
-      trim: true,
-    },
-
-    image: {
-      type: String,
-      default: null,
-    },
-
     type: {
       type: String,
       enum: ["friend", "best_friend", "close_friend"],
