@@ -47,7 +47,10 @@ export const findUserById = async (userId) => {
   return await User.findById(userId);
 };
 
-export const updateUserProfile = async (userId, updateData) => {
+export const updateUserProfile = async (
+  userId,
+  updateData
+) => {
   return await User.findByIdAndUpdate(
     userId,
     {
@@ -57,7 +60,9 @@ export const updateUserProfile = async (userId, updateData) => {
       new: true,
       runValidators: true,
     }
-  ).select("-password -refreshToken -fcmToken");
+  ).select(
+    "-password -refreshToken -fcmToken -profileImagePublicId"
+  );
 };
 
 export const deleteUserById = async (userId) => {

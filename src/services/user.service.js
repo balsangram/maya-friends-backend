@@ -3,12 +3,8 @@ import { deleteUserById, findAllGlobalUsers, updateUserProfile } from "../reposi
 import { deleteFromCloudinary, uploadToCloudinary } from "../utils/cloudinary.js";
 import { ErrorResponse, getPagination } from "../utils/response.js";
 
-export const displayUserDetailsServices = async (userId) => {
-  console.log("findUserRepository userId:", userId);
-
+export const displayUserDetailsService = async (userId) => {
   const user = await findUserRepository(userId);
-
-  console.log("findUserRepository user:", user);
 
   return user;
 };
@@ -16,42 +12,63 @@ export const displayUserDetailsServices = async (userId) => {
 export const editProfileService = async (
   userId,
   updateData,
-  file                                                                             
+  file
 ) => {
-  // Find user
   const existingUser = await findUserById(userId);
 
   if (!existingUser) {
     throw new Error("User not found");
   }
 
-  // Upload new profile image
+  const profileData = {
+    ...updateData,
+  };
+
+  let oldProfileImagePublicId = null;
+
+  // ==============================
+  // Profile Image
+  // ==============================
+
   if (file) {
     const uploadedImage = await uploadToCloudinary(
       file.path,
       "joms/profile"
     );
 
-    updateData.profileImage = uploadedImage.url;
-    updateData.profileImagePublicId = uploadedImage.publicId;
+    profileData.profileImage = uploadedImage.url;
+    profileData.profileImagePublicId =
+      uploadedImage.publicId;
 
-    // Delete old image
-    if (existingUser.profileImagePublicId) {
-      await deleteFromCloudinary(
-        existingUser.profileImagePublicId
-      );
-    }
+    oldProfileImagePublicId =
+      existingUser.profileImagePublicId;
   }
 
-  // Update user
+  // ==============================
+  // Update Profile
+  // ==============================
+
   const updatedUser = await updateUserProfile(
     userId,
-    updateData
+    profileData
   );
+
+  if (!updatedUser) {
+    throw new Error("Failed to update profile");
+  }
+
+  // ==============================
+  // Delete Old Image
+  // ==============================
+
+  if (oldProfileImagePublicId) {
+    await deleteFromCloudinary(
+      oldProfileImagePublicId
+    );
+  }
 
   return updatedUser;
 };
-
 export const displayAllGlobalUsersService = async ({
   page,
   limit,

@@ -1,6 +1,12 @@
 import Joi from "joi";
 
 export const editProfileValidation = Joi.object({
+  name: Joi.string()
+    .trim()
+    .min(2)
+    .max(50)
+    .optional(),
+
   username: Joi.string()
     .trim()
     .min(2)
@@ -35,7 +41,10 @@ export const editProfileValidation = Joi.object({
     .try(
       Joi.array()
         .items(
-          Joi.string().trim().min(1).max(50)
+          Joi.string()
+            .trim()
+            .min(1)
+            .max(50)
         )
         .max(20),
 
@@ -47,7 +56,10 @@ export const editProfileValidation = Joi.object({
     .try(
       Joi.array()
         .items(
-          Joi.string().trim().min(1).max(50)
+          Joi.string()
+            .trim()
+            .min(1)
+            .max(50)
         )
         .max(20),
 
@@ -61,6 +73,16 @@ export const editProfileValidation = Joi.object({
     .optional(),
 
   country: Joi.string()
+    .trim()
+    .max(100)
+    .optional(),
+
+  state: Joi.string()
+    .trim()
+    .max(100)
+    .optional(),
+
+  district: Joi.string()
     .trim()
     .max(100)
     .optional(),

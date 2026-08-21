@@ -69,6 +69,18 @@ const userSchema = new Auth.base.Schema(
       trim: true,
     },
 
+    state: {
+      type: String,
+      default: "",
+      trim: true,
+    },
+
+    district: {
+      type: String,
+      default: "",
+      trim: true,
+    },
+
     pin: {
       type: String,
       default: "",

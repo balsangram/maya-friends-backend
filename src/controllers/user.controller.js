@@ -1,11 +1,11 @@
-import { deleteUserService, displayAllGlobalUsersService, displayUserDetailsServices, editProfileService } from "../services/user.service.js";
+import { deleteUserService, displayAllGlobalUsersService, displayUserDetailsService, editProfileService } from "../services/user.service.js";
 import asyncHandler from "../utils/asyncHandler.js";
 import { paginationResponse, successResponse } from "../utils/response.js";
 
 export const displayProfile = asyncHandler(async (req, res) => {
   const userId = req.user.id;
 
-  const user = await displayUserDetailsServices(userId);
+  const user = await displayUserDetailsService(userId);
 
   if (!user) {
     throw new ApiError(404, "User not found");
@@ -13,6 +13,8 @@ export const displayProfile = asyncHandler(async (req, res) => {
 
   const userResponse = {
     id: user._id,
+
+    name: user.name,
     username: user.username,
     email: user.email,
     role: user.role,
@@ -31,6 +33,8 @@ export const displayProfile = asyncHandler(async (req, res) => {
 
     address: user.address,
     country: user.country,
+    state: user.state,
+    district: user.district,
     pin: user.pin,
 
     isProfilePublic: user.isProfilePublic,
@@ -46,7 +50,7 @@ export const displayProfile = asyncHandler(async (req, res) => {
 export const editProfile = asyncHandler(async (req, res) => {
   const userId = req.user.id;
 
-  const updatedUser = await editProfileService(
+  await editProfileService(
     userId,
     req.body,
     req.file
@@ -57,7 +61,7 @@ export const editProfile = asyncHandler(async (req, res) => {
     "Profile updated successfully",
     null,
     200
-  )
+  );
 });
 export const displayAllGlobalUsers = asyncHandler(
   async (req, res) => {
