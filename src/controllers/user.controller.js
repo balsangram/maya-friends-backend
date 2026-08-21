@@ -1,26 +1,64 @@
-import { displayAllGlobalUsersService, displayUserDEtrailsServices } from "../services/user.service.js";
+import { deleteUserService, displayAllGlobalUsersService, displayUserDetailsServices, editProfileService } from "../services/user.service.js";
 import asyncHandler from "../utils/asyncHandler.js";
 import { paginationResponse, successResponse } from "../utils/response.js";
 
 export const displayProfile = asyncHandler(async (req, res) => {
-    const userId = req.user.id;
-    const user = await displayUserDEtrailsServices(userId);
-    const userResponse = {
-        id: user._id,
-        username: user.username,
-        email: user.email,
-        role: user.role,
-    };
+  const userId = req.user.id;
 
-   return successResponse(
+  const user = await displayUserDetailsServices(userId);
+
+  if (!user) {
+    throw new ApiError(404, "User not found");
+  }
+
+  const userResponse = {
+    id: user._id,
+    username: user.username,
+    email: user.email,
+    role: user.role,
+
+    bio: user.bio,
+    profileImage: user.profileImage,
+
+    dateOfBirth: user.dateOfBirth,
+    gender: user.gender,
+
+    education: user.education,
+    profession: user.profession,
+
+    hobbies: user.hobbies,
+    languages: user.languages,
+
+    address: user.address,
+    country: user.country,
+    pin: user.pin,
+
+    isProfilePublic: user.isProfilePublic,
+  };
+
+  return successResponse(
     res,
     "User profile retrieved successfully",
     userResponse,
     200
-   );
+  );
 });
-export const editProfile = asyncHandler(async (req, res) => {});
+export const editProfile = asyncHandler(async (req, res) => {
+  const userId = req.user.id;
 
+  const updatedUser = await editProfileService(
+    userId,
+    req.body,
+    req.file
+  );
+
+  return successResponse(
+    res,
+    "Profile updated successfully",
+    null,
+    200
+  )
+});
 export const displayAllGlobalUsers = asyncHandler(
   async (req, res) => {
     const {
@@ -45,3 +83,13 @@ export const displayAllGlobalUsers = asyncHandler(
     );
   }
 );
+export const deleteUser = asyncHandler(async (req, res) => {
+  const userId = req.user.id;
+
+  await deleteUserService(userId);
+
+  return successResponse(
+    res,
+    "User deleted successfully"
+  );
+});

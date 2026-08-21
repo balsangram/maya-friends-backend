@@ -23,22 +23,23 @@ const storage = multer.diskStorage({
     } else if (file.mimetype.startsWith("video/")) {
       cb(null, videoPath);
     } else {
-      cb(new Error("Only image and video files are allowed"));
+      cb(new Error("Only image and video files are allowed"), false);
     }
   },
 
   filename: (req, file, cb) => {
     const extension = path.extname(file.originalname);
 
-    const filename =
-      `${file.fieldname}-${Date.now()}-${Math.round(Math.random() * 1e9)}${extension}`;
+    const filename = `${file.fieldname}-${Date.now()}-${Math.round(
+      Math.random() * 1e9
+    )}${extension}`;
 
     cb(null, filename);
   },
 });
 
 // ==============================
-// File filter
+// File Filter
 // ==============================
 
 const fileFilter = (req, file, cb) => {
@@ -80,7 +81,7 @@ const upload = multer({
   fileFilter,
 
   limits: {
-    fileSize: 100 * 1024 * 1024, // 100 MB
+    fileSize: 100 * 1024 * 1024,
   },
 });
 

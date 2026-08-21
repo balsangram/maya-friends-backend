@@ -57,8 +57,8 @@ export const forgotPasswordService = async (passwordData) => {
   const user = await findUserRepository(userId);
   if (!user) {
     throw new ErrorResponse("User not found");
-  }
-  const isPasswordValid = await updatePassword(userId, newPassword);
+  }  const hashedPassword = await hashPassword(newPassword);
+  const isPasswordValid = await updatePassword(userId, hashedPassword);
   if (!isPasswordValid) {
     throw new ErrorResponse("Invalid password");
   }

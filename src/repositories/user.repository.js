@@ -42,3 +42,24 @@ export const findAllGlobalUsers = async ({
     total,
   };
 };
+
+export const findUserById = async (userId) => {
+  return await User.findById(userId);
+};
+
+export const updateUserProfile = async (userId, updateData) => {
+  return await User.findByIdAndUpdate(
+    userId,
+    {
+      $set: updateData,
+    },
+    {
+      new: true,
+      runValidators: true,
+    }
+  ).select("-password -refreshToken -fcmToken");
+};
+
+export const deleteUserById = async (userId) => {
+  return await User.findByIdAndDelete(userId);
+};
