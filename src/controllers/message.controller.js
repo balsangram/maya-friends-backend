@@ -8,36 +8,61 @@ import {
   forwardMessageService,
   markMessageAsReadService,
 } from "../services/message.service.js";
+import { uploadToCloudinary } from "../utils/cloudinary.js";
 
 // Send message
-export const sendMessage = asyncHandler(async (req, res) => {
-  const senderId = req.user.id;
+export const sendMessage = asyncHandler(
+  async (req, res) => {
+    const senderId = req.user.id;
 
-  const {
-    chatId,
-    messageType,
-    message,
-    media,
-    replyTo,
-  } = req.body;
-
-  const result = await sendMessageService(
-    senderId,
-    {
+    const {
       chatId,
       messageType,
       message,
-      media,
       replyTo,
-    }
-  );
+    } = req.body || {};
 
-  return res.status(201).json({
-    success: true,
-    message: "Message sent successfully",
-    data: result,
-  });
-});
+    let media = null;
+
+    if (req.file) {
+      const folder = req.file.mimetype.startsWith("image/")
+        ? "joms/messages/images"
+        : req.file.mimetype.startsWith("video/")
+        ? "joms/messages/videos"
+        : req.file.mimetype.startsWith("audio/")
+        ? "joms/messages/audio"
+        : "joms/messages/files";
+
+      const uploaded = await uploadToCloudinary(req.file, folder);
+
+      media = {
+        url: uploaded.url,
+        mediaId: uploaded.publicId,
+        fileName: req.file.originalname,
+        fileSize: req.file.size,
+        mimeType: req.file.mimetype,
+      };
+    }
+
+    const result =
+      await sendMessageService(
+        senderId,
+        {
+          chatId,
+          messageType,
+          message,
+          media,
+          replyTo,
+        }
+      );
+
+    return res.status(201).json({
+      success: true,
+      message: "Message sent successfully",
+      data: result,
+    });
+  }
+);
 
 // Get chat messages
 export const getChatMessages = asyncHandler(async (req, res) => {

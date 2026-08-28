@@ -25,21 +25,20 @@ export const findMessageByIdRepository = async (
 // Get messages
 export const getChatMessagesRepository = async (
   chatId,
-  page,
-  limit
+  page = 1,
+  limit = 20
 ) => {
   const skip = (page - 1) * limit;
 
   const messages = await Message.find({
     chatId,
+    isDeleted: false,
   })
     .populate(
       "senderId",
       "name email profileImage"
     )
-    .populate(
-      "replyTo"
-    )
+    .populate("replyTo")
     .sort({
       createdAt: -1,
     })

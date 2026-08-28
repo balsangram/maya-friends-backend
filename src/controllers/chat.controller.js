@@ -12,8 +12,9 @@ import { successResponse } from "../utils/response.js";
 
 // Create private chat
 export const createPrivateChat = asyncHandler(async (req, res) => {
+    console.log("==================")
     const userId = req.user.id;
-
+console.log("userId",userId)
     const { userId: friendId } = req.body;
 
     const chat = await createPrivateChatService(
@@ -30,28 +31,33 @@ export const createPrivateChat = asyncHandler(async (req, res) => {
 
 
 // Create group
-export const createGroupChat = asyncHandler(async (req, res) => {
+export const createGroupChat = asyncHandler(
+  async (req, res) => {
     const userId = req.user.id;
 
     const {
-        groupName,
-        groupImage,
-        memberIds = [],
-    } = req.body;
+      groupName,
+      groupImage,
+      memberIds = [],
+    } = req.body || {};
 
-    const group = await createGroupChatService(
+    const group =
+      await createGroupChatService({
         userId,
         groupName,
         groupImage,
-        memberIds
-    );
+        memberIds,
+        file: req.file,
+      });
 
     return successResponse(
-        res,
-         "Group created successfully",
-        group,
+      res,
+      "Group created successfully",
+      group,
+      201
     );
-});
+  }
+);
 
 
 // Get logged-in user's chats

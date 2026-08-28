@@ -6,19 +6,20 @@ import {
   findGroupMembersRepository,
   createGroupMemberRepository,
   updateGroupMemberRepository,
-  deleteGroupMemberRepository,
   updateGroupRepository,
   addGroupAdminRepository,
   removeGroupAdminRepository,
 } from "../repositories/group.repository.js";
+import { uploadToCloudinary, deleteFromCloudinary } from "../utils/cloudinary.js";
+import ApiError from "../utils/ApiError.js";
 
 
 const validateObjectId = (
   id,
   fieldName
 ) => {
-  if (!mongoose.Types.ObjectId.isValid(id)) {
-    throw new Error(
+  if (!id || !mongoose.Types.ObjectId.isValid(id)) {
+    throw ApiError.badRequest(
       `Invalid ${fieldName}`
     );
   }
@@ -37,19 +38,19 @@ const checkGroupAdmin = async (
     );
 
   if (!member) {
-    throw new Error(
+    throw ApiError.forbidden(
       "You are not a member of this group"
     );
   }
 
   if (member.status !== "active") {
-    throw new Error(
+    throw ApiError.forbidden(
       "You are not an active member"
     );
   }
 
   if (member.role !== "admin") {
-    throw new Error(
+    throw ApiError.forbidden(
       "Only group admins can perform this action"
     );
   }
@@ -80,13 +81,13 @@ export const getGroupMembersService =
       );
 
     if (!group) {
-      throw new Error(
+      throw ApiError.notFound(
         "Group not found"
       );
     }
 
     if (group.type !== "group") {
-      throw new Error(
+      throw ApiError.badRequest(
         "This chat is not a group"
       );
     }
@@ -102,7 +103,7 @@ export const getGroupMembersService =
       !member ||
       member.status !== "active"
     ) {
-      throw new Error(
+      throw ApiError.forbidden(
         "You are not a member of this group"
       );
     }
@@ -139,7 +140,7 @@ export const addGroupMemberService =
       currentUserId.toString() ===
       newUserId.toString()
     ) {
-      throw new Error(
+      throw ApiError.badRequest(
         "You are already in the group"
       );
     }
@@ -160,7 +161,7 @@ export const addGroupMemberService =
       existingMember &&
       existingMember.status === "active"
     ) {
-      throw new Error(
+      throw ApiError.conflict(
         "User is already a member"
       );
     }
@@ -225,13 +226,13 @@ export const removeGroupMemberService =
       );
 
     if (!member) {
-      throw new Error(
+      throw ApiError.notFound(
         "User is not a member of this group"
       );
     }
 
     if (member.status !== "active") {
-      throw new Error(
+      throw ApiError.badRequest(
         "User is not an active member"
       );
     }
@@ -241,7 +242,7 @@ export const removeGroupMemberService =
       currentUserId.toString() ===
       userId.toString()
     ) {
-      throw new Error(
+      throw ApiError.badRequest(
         "Use leave group to leave the group"
       );
     }
@@ -287,7 +288,7 @@ export const blockGroupMemberService =
       currentUserId.toString() ===
       userId.toString()
     ) {
-      throw new Error(
+      throw ApiError.badRequest(
         "You cannot block yourself"
       );
     }
@@ -299,13 +300,13 @@ export const blockGroupMemberService =
       );
 
     if (!member) {
-      throw new Error(
+      throw ApiError.notFound(
         "User is not a member of this group"
       );
     }
 
     if (member.status === "blocked") {
-      throw new Error(
+      throw ApiError.badRequest(
         "User is already blocked"
       );
     }
@@ -354,13 +355,13 @@ export const unblockGroupMemberService =
       );
 
     if (!member) {
-      throw new Error(
+      throw ApiError.notFound(
         "User is not a member of this group"
       );
     }
 
     if (member.status !== "blocked") {
-      throw new Error(
+      throw ApiError.badRequest(
         "User is not blocked"
       );
     }
@@ -410,19 +411,19 @@ export const makeGroupAdminService =
       );
 
     if (!member) {
-      throw new Error(
+      throw ApiError.notFound(
         "User is not a member of this group"
       );
     }
 
     if (member.status !== "active") {
-      throw new Error(
+      throw ApiError.badRequest(
         "User must be an active member"
       );
     }
 
     if (member.role === "admin") {
-      throw new Error(
+      throw ApiError.badRequest(
         "User is already an admin"
       );
     }
@@ -474,7 +475,7 @@ export const removeGroupAdminService =
       currentUserId.toString() ===
       userId.toString()
     ) {
-      throw new Error(
+      throw ApiError.badRequest(
         "You cannot remove your own admin permission"
       );
     }
@@ -486,13 +487,13 @@ export const removeGroupAdminService =
       );
 
     if (!member) {
-      throw new Error(
+      throw ApiError.notFound(
         "User is not a member of this group"
       );
     }
 
     if (member.role !== "admin") {
-      throw new Error(
+      throw ApiError.badRequest(
         "User is not an admin"
       );
     }
@@ -534,13 +535,13 @@ export const leaveGroupService =
       );
 
     if (!member) {
-      throw new Error(
+      throw ApiError.notFound(
         "You are not a member of this group"
       );
     }
 
     if (member.status !== "active") {
-      throw new Error(
+      throw ApiError.badRequest(
         "You are not an active member"
       );
     }
@@ -569,7 +570,8 @@ export const updateGroupService =
   async (
     groupId,
     userId,
-    updateData
+    updateData,
+    file = null
   ) => {
     validateObjectId(
       groupId,
@@ -586,6 +588,13 @@ export const updateGroupService =
       userId
     );
 
+    const existingGroup =
+      await findGroupByIdRepository(groupId);
+
+    if (!existingGroup) {
+      throw ApiError.notFound("Group not found");
+    }
+
     const updateFields = {};
 
     if (
@@ -596,7 +605,7 @@ export const updateGroupService =
         updateData.groupName.trim();
 
       if (!groupName) {
-        throw new Error(
+        throw ApiError.badRequest(
           "Group name cannot be empty"
         );
       }
@@ -605,25 +614,51 @@ export const updateGroupService =
         groupName;
     }
 
-    if (
+    let oldGroupImagePublicId = null;
+
+    if (file) {
+      const uploadResult = await uploadToCloudinary(
+        file,
+        "joms/groups"
+      );
+
+      updateFields.groupImage = {
+        url: uploadResult.url,
+        mediaId: uploadResult.publicId,
+      };
+
+      oldGroupImagePublicId = existingGroup.groupImage?.mediaId;
+    } else if (
       updateData.groupImage !==
         undefined
     ) {
-      updateFields.groupImage =
-        updateData.groupImage;
+      if (typeof updateData.groupImage === "string") {
+        updateFields.groupImage = {
+          url: updateData.groupImage,
+        };
+      } else {
+        updateFields.groupImage =
+          updateData.groupImage;
+      }
     }
 
     if (
       Object.keys(updateFields)
         .length === 0
     ) {
-      throw new Error(
+      throw ApiError.badRequest(
         "No fields provided for update"
       );
     }
 
-    return await updateGroupRepository(
+    const updatedGroup = await updateGroupRepository(
       groupId,
       updateFields
     );
+
+    if (oldGroupImagePublicId) {
+      await deleteFromCloudinary(oldGroupImagePublicId);
+    }
+
+    return updatedGroup;
   };

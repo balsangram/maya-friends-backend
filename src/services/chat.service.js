@@ -9,6 +9,8 @@ import {
   isChatParticipantRepository,
   deactivateChatRepository,
 } from "../repositories/chat.repository.js";
+import { uploadToCloudinary } from "../utils/cloudinary.js";
+import ApiError from "../utils/ApiError.js";
 
 
 // Create private chat
@@ -17,15 +19,15 @@ export const createPrivateChatService = async (
   friendId
 ) => {
   if (!friendId) {
-    throw new Error("Friend userId is required");
+    throw ApiError.badRequest("Friend userId is required");
   }
 
   if (!mongoose.Types.ObjectId.isValid(friendId)) {
-    throw new Error("Invalid friend userId");
+    throw ApiError.badRequest("Invalid friend userId");
   }
 
   if (userId.toString() === friendId.toString()) {
-    throw new Error("You cannot create a chat with yourself");
+    throw ApiError.badRequest("You cannot create a chat with yourself");
   }
 
   // Check whether chat already exists
@@ -56,21 +58,72 @@ export const createPrivateChatService = async (
 
 
 // Create group
-export const createGroupChatService = async (
-  userId,
-  groupName,
-  groupImage,
-  memberIds
-) => {
-  if (!groupName?.trim()) {
-    throw new Error("Group name is required");
+export const createGroupChatService = async (paramsOrUserId, ...rest) => {
+  let userId;
+  let groupName;
+  let groupImage = null;
+  let memberIds = [];
+  let file = null;
+
+  if (
+    typeof paramsOrUserId === "object" &&
+    paramsOrUserId !== null &&
+    !Array.isArray(paramsOrUserId)
+  ) {
+    ({
+      userId,
+      groupName,
+      groupImage = null,
+      memberIds = [],
+      file = null,
+    } = paramsOrUserId);
+  } else {
+    userId = paramsOrUserId;
+    [groupName, groupImage = null, memberIds = [], file = null] = rest;
   }
+
+  if (!groupName?.trim()) {
+    throw ApiError.badRequest("Group name is required");
+  }
+
+  // Helper to normalize memberIds from various possible input formats
+  const normalizeMemberIds = (ids) => {
+    if (!ids) return [];
+    if (Array.isArray(ids)) {
+      return ids
+        .map((id) =>
+          typeof id === "object" && id !== null
+            ? (id._id || id.id || id).toString()
+            : String(id).trim()
+        )
+        .filter((id) => id && mongoose.Types.ObjectId.isValid(id));
+    }
+    if (typeof ids === "string") {
+      const trimmed = ids.trim();
+      if (!trimmed) return [];
+      if (trimmed.startsWith("[") && trimmed.endsWith("]")) {
+        try {
+          const parsed = JSON.parse(trimmed);
+          if (Array.isArray(parsed)) {
+            return normalizeMemberIds(parsed);
+          }
+        } catch {
+          // fall through to comma split
+        }
+      }
+      return trimmed
+        .split(",")
+        .map((id) => id.trim())
+        .filter((id) => id && mongoose.Types.ObjectId.isValid(id));
+    }
+    return [];
+  };
+
+  const parsedMemberIds = normalizeMemberIds(memberIds);
 
   // Remove duplicate users
   const uniqueMemberIds = [
-    ...new Set(
-      memberIds.map((id) => id.toString())
-    ),
+    ...new Set(parsedMemberIds),
   ];
 
   // Don't add creator twice
@@ -79,13 +132,36 @@ export const createGroupChatService = async (
       (id) => id !== userId.toString()
     );
 
+  let formattedGroupImage = null;
+
+  // If a file was uploaded, upload to Cloudinary
+  if (file) {
+    const uploadResult = await uploadToCloudinary(
+      file,
+      "joms/groups"
+    );
+
+    formattedGroupImage = {
+      url: uploadResult.url,
+      mediaId: uploadResult.publicId,
+    };
+  } else if (groupImage) {
+    if (typeof groupImage === "string") {
+      formattedGroupImage = {
+        url: groupImage,
+      };
+    } else if (typeof groupImage === "object" && groupImage.url) {
+      formattedGroupImage = groupImage;
+    }
+  }
+
   // Create group
   const group = await createChatRepository({
     type: "group",
 
     groupName: groupName.trim(),
 
-    groupImage: groupImage || null,
+    groupImage: formattedGroupImage,
 
     groupAdmins: [userId],
 
@@ -137,14 +213,14 @@ export const getChatDetailsService = async (
   userId
 ) => {
   if (!mongoose.Types.ObjectId.isValid(chatId)) {
-    throw new Error("Invalid chatId");
+    throw ApiError.badRequest("Invalid chatId");
   }
 
   const chat =
     await findChatByIdRepository(chatId);
 
   if (!chat) {
-    throw new Error("Chat not found");
+    throw ApiError.notFound("Chat not found");
   }
 
   // Check whether user belongs to chat
@@ -155,7 +231,7 @@ export const getChatDetailsService = async (
     );
 
   if (!isParticipant) {
-    throw new Error(
+    throw ApiError.forbidden(
       "You are not a member of this chat"
     );
   }
@@ -170,14 +246,14 @@ export const deleteChatService = async (
   userId
 ) => {
   if (!mongoose.Types.ObjectId.isValid(chatId)) {
-    throw new Error("Invalid chatId");
+    throw ApiError.badRequest("Invalid chatId");
   }
 
   const chat =
     await findChatByIdRepository(chatId);
 
   if (!chat) {
-    throw new Error("Chat not found");
+    throw ApiError.notFound("Chat not found");
   }
 
   // Only creator can deactivate group
@@ -185,7 +261,7 @@ export const deleteChatService = async (
     chat.createdBy.toString() !==
     userId.toString()
   ) {
-    throw new Error(
+    throw ApiError.forbidden(
       "You are not authorized to delete this chat"
     );
   }

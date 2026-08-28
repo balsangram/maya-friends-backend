@@ -11,6 +11,7 @@ import groupRoutes from "./routes/group.routes.js";
 import postRoutes from "./routes/post.routes.js";
 import swaggerUi from "swagger-ui-express";
 import swaggerSpec from "./config/swagger.js";
+import ApiError from "./utils/ApiError.js";
 import errorMiddleware from "./middlewares/error.middleware.js";
 
 const app = express();
@@ -56,6 +57,14 @@ app.use("/api/chats", chatRoutes);
 app.use("/api/messages", messageRoutes);
 app.use("/api/groups", groupRoutes);
 app.use("/api/post", postRoutes);
+
+/* ==============================
+   404 Handler
+============================== */
+
+app.use((req, res, next) => {
+  next(ApiError.notFound(`Cannot ${req.method} ${req.originalUrl}`));
+});
 
 // IMPORTANT: error middleware must be last
 app.use(errorMiddleware);

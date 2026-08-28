@@ -10,6 +10,7 @@ import {
   markMessageAsRead,
   sendMessage,
 } from "../controllers/message.controller.js";
+import upload from "../middlewares/upload.middleware.js";
 
 const router = express.Router();
 
@@ -17,21 +18,24 @@ const router = express.Router();
 router.use(authMiddleware);
 
 // Get messages
-router.get("/chat/:chatId", getChatMessages);
+router.get("/v1/chat/:chatId", getChatMessages);
 
 // Send text/media message
-router.post("/", sendMessage);
-
+router.post(
+  "/v1",
+  upload.single("file"),
+  sendMessage
+);
 // Edit message
-router.patch("/:messageId", editMessage);
+router.patch("/v1/:messageId", editMessage);
 
 // Delete message
-router.delete("/:messageId", deleteMessage);
+router.delete("/v1/:messageId", deleteMessage);
 
 // Forward/share message
-router.post("/:messageId/forward", forwardMessage);
+router.post("/v1/:messageId/forward", forwardMessage);
 
 // Mark message as read
-router.patch("/:messageId/read", markMessageAsRead);
+router.patch("/v1/:messageId/read", markMessageAsRead);
 
 export default router;

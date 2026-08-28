@@ -1,5 +1,6 @@
 import { createPostService, deletePostService, displayPostsService, editPostService } from "../services/post.services.js";
 import asyncHandler from "../utils/asyncHandler.js";
+import ApiError from "../utils/ApiError.js";
 import { getPagination, paginationResponse, successResponse } from "../utils/response.js";
 
 export const createPost = asyncHandler(async (req, res) => {

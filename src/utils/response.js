@@ -1,3 +1,7 @@
+import ApiError, { ErrorResponse } from "./ApiError.js";
+
+export { ApiError, ErrorResponse };
+
 export const successResponse = (
   res,
   message,
@@ -9,17 +13,6 @@ export const successResponse = (
     message,
     data,
   });
-};
-
-export class ErrorResponse extends Error {
-  constructor(message, statusCode = 500) {
-    super(message);
-
-    this.statusCode = statusCode;
-    this.success = false;
-
-    Error.captureStackTrace(this, this.constructor);
-  }
 };
 
 export const getPagination = (page = 1, limit = 10) => {

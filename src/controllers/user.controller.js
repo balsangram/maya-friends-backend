@@ -1,5 +1,6 @@
 import { deleteUserService, displayAllGlobalUsersService, displayUserDetailsService, editProfileService } from "../services/user.service.js";
 import asyncHandler from "../utils/asyncHandler.js";
+import ApiError from "../utils/ApiError.js";
 import { paginationResponse, successResponse } from "../utils/response.js";
 
 export const displayProfile = asyncHandler(async (req, res) => {

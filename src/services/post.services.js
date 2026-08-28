@@ -1,5 +1,12 @@
-import { createPostRepository, deletePostRepository, findPostByIdRepository, findPostsRepository, updatePostRepository } from "../repositories/post.repository.js";
+import {
+  createPostRepository,
+  deletePostRepository,
+  findPostByIdRepository,
+  findPostsRepository,
+  updatePostRepository,
+} from "../repositories/post.repository.js";
 import { deleteFromCloudinary, uploadToCloudinary } from "../utils/cloudinary.js";
+import ApiError from "../utils/ApiError.js";
 
 export const createPostService = async (
   userId,
@@ -16,7 +23,7 @@ export const createPostService = async (
   if (files?.images?.length) {
     for (const file of files.images) {
       const result = await uploadToCloudinary(
-        file.path,
+        file,
         "joms/posts/images"
       );
 
@@ -34,7 +41,7 @@ export const createPostService = async (
   if (files?.videos?.length) {
     for (const file of files.videos) {
       const result = await uploadToCloudinary(
-        file.path,
+        file,
         "joms/posts/videos"
       );
 
@@ -63,24 +70,18 @@ export const editPostService = async (
   updateData,
   files
 ) => {
-  const existingPost =
-    await findPostByIdRepository(postId);
+  const existingPost = await findPostByIdRepository(postId);
 
   if (!existingPost) {
-    throw new Error("Post not found");
+    throw ApiError.notFound("Post not found");
   }
 
   // ==============================
   // Check Owner
   // ==============================
 
-  if (
-    existingPost.userId.toString() !==
-    userId.toString()
-  ) {
-    throw new Error(
-      "You are not allowed to edit this post"
-    );
+  if (existingPost.userId.toString() !== userId.toString()) {
+    throw ApiError.forbidden("You are not allowed to edit this post");
   }
 
   const postData = {
@@ -96,7 +97,7 @@ export const editPostService = async (
 
     for (const file of files.images) {
       const result = await uploadToCloudinary(
-        file.path,
+        file,
         "joms/posts/images"
       );
 
@@ -111,9 +112,7 @@ export const editPostService = async (
     // Delete old images
     for (const image of existingPost.images) {
       if (image.mediaId) {
-        await deleteFromCloudinary(
-          image.mediaId
-        );
+        await deleteFromCloudinary(image.mediaId);
       }
     }
   }
@@ -127,7 +126,7 @@ export const editPostService = async (
 
     for (const file of files.videos) {
       const result = await uploadToCloudinary(
-        file.path,
+        file,
         "joms/posts/videos"
       );
 
@@ -142,9 +141,7 @@ export const editPostService = async (
     // Delete old videos
     for (const video of existingPost.videos) {
       if (video.mediaId) {
-        await deleteFromCloudinary(
-          video.mediaId
-        );
+        await deleteFromCloudinary(video.mediaId);
       }
     }
   }
@@ -159,24 +156,18 @@ export const deletePostService = async (
   userId,
   postId
 ) => {
-  const existingPost =
-    await findPostByIdRepository(postId);
+  const existingPost = await findPostByIdRepository(postId);
 
   if (!existingPost) {
-    throw new Error("Post not found");
+    throw ApiError.notFound("Post not found");
   }
 
   // ==============================
   // Check Owner
   // ==============================
 
-  if (
-    existingPost.userId.toString() !==
-    userId.toString()
-  ) {
-    throw new Error(
-      "You are not allowed to delete this post"
-    );
+  if (existingPost.userId.toString() !== userId.toString()) {
+    throw ApiError.forbidden("You are not allowed to delete this post");
   }
 
   // ==============================
@@ -185,9 +176,7 @@ export const deletePostService = async (
 
   for (const image of existingPost.images) {
     if (image.mediaId) {
-      await deleteFromCloudinary(
-        image.mediaId
-      );
+      await deleteFromCloudinary(image.mediaId);
     }
   }
 
@@ -197,9 +186,7 @@ export const deletePostService = async (
 
   for (const video of existingPost.videos) {
     if (video.mediaId) {
-      await deleteFromCloudinary(
-        video.mediaId
-      );
+      await deleteFromCloudinary(video.mediaId);
     }
   }
 
@@ -239,7 +226,7 @@ export const displayPostsService = async (
   // ==============================
 
   if (type === "friends") {
-    throw new Error(
+    throw ApiError.badRequest(
       "Friends post functionality is not implemented yet"
     );
   }

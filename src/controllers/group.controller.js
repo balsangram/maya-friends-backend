@@ -17,7 +17,7 @@ import {
 export const getGroupMembers = asyncHandler(
   async (req, res) => {
     const { groupId } = req.params;
-
+console.log(groupId,"groupId")
     const userId = req.user.id;
 
     const members =
@@ -204,7 +204,8 @@ export const updateGroup = asyncHandler(
         {
           groupName,
           groupImage,
-        }
+        },
+        req.file
       );
 
     return res.status(200).json({

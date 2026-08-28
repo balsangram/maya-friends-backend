@@ -1,6 +1,7 @@
 import express from "express";
 
 import authMiddleware from "../middlewares/auth.middleware.js";
+import upload from "../middlewares/upload.middleware.js";
 import {
   getGroupMembers,
   addGroupMember,
@@ -18,30 +19,30 @@ const router = express.Router();
 router.use(authMiddleware);
 
 // Get group members
-router.get("/:groupId/members", getGroupMembers);
+router.get(["/v1/:groupId/members", "/:groupId/members"], getGroupMembers);
 
 // Add user to group
-router.post("/:groupId/members", addGroupMember);
+router.post(["/v1/:groupId/members", "/:groupId/members"], addGroupMember);
 
 // Remove user from group
-router.delete("/:groupId/members/:userId", removeGroupMember);
+router.delete(["/v1/:groupId/members/:userId", "/:groupId/members/:userId"], removeGroupMember);
 
 // Block user
-router.patch("/:groupId/members/:userId/block", blockGroupMember);
+router.patch(["/v1/:groupId/members/:userId/block", "/:groupId/members/:userId/block"], blockGroupMember);
 
 // Unblock user
-router.patch("/:groupId/members/:userId/unblock", unblockGroupMember);
+router.patch(["/v1/:groupId/members/:userId/unblock", "/:groupId/members/:userId/unblock"], unblockGroupMember);
 
 // Make member admin
-router.patch("/:groupId/members/:userId/admin", makeGroupAdmin);
+router.patch(["/v1/:groupId/members/:userId/admin", "/:groupId/members/:userId/admin"], makeGroupAdmin);
 
 // Remove admin permission
-router.patch("/:groupId/members/:userId/remove-admin", removeGroupAdmin);
+router.patch(["/v1/:groupId/members/:userId/remove-admin", "/:groupId/members/:userId/remove-admin"], removeGroupAdmin);
 
 // Leave group
-router.post("/:groupId/leave", leaveGroup);
+router.post(["/v1/:groupId/leave", "/:groupId/leave"], leaveGroup);
 
 // Update group name/image
-router.patch("/:groupId", updateGroup);
+router.patch(["/v1/:groupId", "/:groupId"], upload.single("groupImage"), updateGroup);
 
 export default router;

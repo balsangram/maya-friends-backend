@@ -15,6 +15,7 @@ import {
   updateLastMessageRepository,
 } from "../repositories/chat.repository.js";
 import { getIO } from "../config/socket.js";
+import ApiError from "../utils/ApiError.js";
 
 
 // ============================================
@@ -23,7 +24,7 @@ import { getIO } from "../config/socket.js";
 
 const validateId = (id, name) => {
   if (!id || !mongoose.Types.ObjectId.isValid(id)) {
-    throw new Error(`Invalid ${name}`);
+    throw ApiError.badRequest(`Invalid ${name}`);
   }
 };
 
@@ -39,11 +40,11 @@ const validateChatAccess = async (chatId, userId) => {
   const chat = await findChatByIdRepository(chatId);
 
   if (!chat) {
-    throw new Error("Chat not found");
+    throw ApiError.notFound("Chat not found");
   }
 
   if (!chat.isActive) {
-    throw new Error("Chat is inactive");
+    throw ApiError.badRequest("Chat is inactive");
   }
 
   const allowed = await isChatParticipantRepository(
@@ -52,7 +53,7 @@ const validateChatAccess = async (chatId, userId) => {
   );
 
   if (!allowed) {
-    throw new Error("You are not a member of this chat");
+    throw ApiError.forbidden("You are not a member of this chat");
   }
 
   return chat;
@@ -64,9 +65,13 @@ const validateChatAccess = async (chatId, userId) => {
 // ============================================
 
 const emitToChat = (chatId, event, data) => {
-  const io = getIO();
-
-  io.to(`chat:${chatId}`).emit(event, data);
+  try {
+    const io = getIO();
+    io.to(`chat:${chatId}`).emit(event, data);
+  } catch (error) {
+    // Socket emit should not fail HTTP request if socket is not connected
+    console.warn("Socket emission error:", error.message);
+  }
 };
 
 
@@ -101,11 +106,11 @@ export const sendMessageService = async (
   ];
 
   if (!allowedMessageTypes.includes(messageType)) {
-    throw new Error("Invalid message type");
+    throw ApiError.badRequest("Invalid message type");
   }
 
   if (messageType === "text" && !message.trim()) {
-    throw new Error("Message is required");
+    throw ApiError.badRequest("Message is required");
   }
 
   if (
@@ -114,18 +119,33 @@ export const sendMessageService = async (
     ) &&
     !media?.url
   ) {
-    throw new Error("Media URL is required");
+    throw ApiError.badRequest("Media URL is required");
   }
 
-  // Validate reply
-  if (replyTo) {
-    validateId(replyTo, "replyTo");
+  // Sanitize replyTo (handles empty string, "null", "undefined", null, undefined)
+  let cleanReplyTo = null;
+  if (
+    replyTo !== null &&
+    replyTo !== undefined &&
+    replyTo !== "" &&
+    replyTo !== "null" &&
+    replyTo !== "undefined"
+  ) {
+    const replyStr = typeof replyTo === "object" ? replyTo.toString() : String(replyTo).trim();
+    if (replyStr && replyStr !== "null" && replyStr !== "undefined") {
+      cleanReplyTo = replyStr;
+    }
+  }
+
+  // Validate reply if provided
+  if (cleanReplyTo) {
+    validateId(cleanReplyTo, "replyTo");
 
     const replyMessage =
-      await findMessageByIdRepository(replyTo);
+      await findMessageByIdRepository(cleanReplyTo);
 
     if (!replyMessage) {
-      throw new Error("Reply message not found");
+      throw ApiError.notFound("Reply message not found");
     }
 
     const replyChatId =
@@ -136,7 +156,7 @@ export const sendMessageService = async (
       replyChatId.toString() !==
       chatId.toString()
     ) {
-      throw new Error(
+      throw ApiError.badRequest(
         "Reply message must belong to the same chat"
       );
     }
@@ -152,7 +172,7 @@ export const sendMessageService = async (
           ? message.trim()
           : message,
       media,
-      replyTo,
+      replyTo: cleanReplyTo,
       readBy: [senderId],
     });
 
@@ -168,7 +188,7 @@ export const sendMessageService = async (
     );
 
   if (!populated) {
-    throw new Error(
+    throw ApiError.internal(
       "Failed to fetch created message"
     );
   }
@@ -234,7 +254,7 @@ export const editMessageService = async (
   validateId(messageId, "messageId");
 
   if (!text?.trim()) {
-    throw new Error(
+    throw ApiError.badRequest(
       "Message text is required"
     );
   }
@@ -245,7 +265,7 @@ export const editMessageService = async (
     );
 
   if (!message) {
-    throw new Error(
+    throw ApiError.notFound(
       "Message not found"
     );
   }
@@ -258,13 +278,13 @@ export const editMessageService = async (
     senderId.toString() !==
     userId.toString()
   ) {
-    throw new Error(
+    throw ApiError.forbidden(
       "You can edit only your own message"
     );
   }
 
   if (message.isDeleted) {
-    throw new Error(
+    throw ApiError.badRequest(
       "Deleted message cannot be edited"
     );
   }
@@ -310,7 +330,7 @@ export const deleteMessageService = async (
     );
 
   if (!message) {
-    throw new Error(
+    throw ApiError.notFound(
       "Message not found"
     );
   }
@@ -323,13 +343,13 @@ export const deleteMessageService = async (
     senderId.toString() !==
     userId.toString()
   ) {
-    throw new Error(
+    throw ApiError.forbidden(
       "You can delete only your own message"
     );
   }
 
   if (message.isDeleted) {
-    throw new Error(
+    throw ApiError.badRequest(
       "Message is already deleted"
     );
   }
@@ -372,7 +392,7 @@ export const forwardMessageService = async (
     !Array.isArray(chatIds) ||
     chatIds.length === 0
   ) {
-    throw new Error(
+    throw ApiError.badRequest(
       "At least one chat is required"
     );
   }
@@ -383,13 +403,13 @@ export const forwardMessageService = async (
     );
 
   if (!original) {
-    throw new Error(
+    throw ApiError.notFound(
       "Original message not found"
     );
   }
 
   if (original.isDeleted) {
-    throw new Error(
+    throw ApiError.badRequest(
       "Deleted message cannot be forwarded"
     );
   }
@@ -470,7 +490,7 @@ export const markMessageAsReadService = async (
     );
 
   if (!message) {
-    throw new Error(
+    throw ApiError.notFound(
       "Message not found"
     );
   }
