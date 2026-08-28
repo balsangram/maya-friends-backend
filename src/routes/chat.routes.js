@@ -1,20 +1,32 @@
 import express from "express";
 
 import {
-  getMessageHistory,
-  sendMessage,
-  editMessage,
-  deleteMessage,
+  createPrivateChat,
+  createGroupChat,
+  getUserChats,
+  getChatDetails,
+  deleteChat,
 } from "../controllers/chat.controller.js";
+
+import authMiddleware from "../middlewares/auth.middleware.js";
 
 const router = express.Router();
 
-router.get("/history/:userId", getMessageHistory);
+router.use(authMiddleware);
 
-router.post("/send", sendMessage);
+// Create 1-to-1 private chat
+router.post("/private", createPrivateChat);
 
-router.put("/edit/:messageId", editMessage);
+// Create group
+router.post("/group", createGroupChat);
 
-router.delete("/delete/:messageId", deleteMessage);
+// Get logged-in user's chats
+router.get("/", getUserChats);
+
+// Get particular chat
+router.get("/:chatId", getChatDetails);
+
+// Delete/deactivate chat
+router.delete("/:chatId", deleteChat);
 
 export default router;

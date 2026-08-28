@@ -6,6 +6,8 @@ import adminRoutes from "./routes/admin.routes.js";
 import userRoutes from "./routes/user.routes.js";
 import friendRoutes from "./routes/friend.routes.js";
 import chatRoutes from "./routes/chat.routes.js";
+import messageRoutes from "./routes/message.routes.js";
+import groupRoutes from "./routes/group.routes.js";
 import postRoutes from "./routes/post.routes.js";
 import swaggerUi from "swagger-ui-express";
 import swaggerSpec from "./config/swagger.js";
@@ -50,7 +52,9 @@ app.use("/api/auth", authRoutes);
 app.use("/api/user", userRoutes);
 app.use("/api/admin", adminRoutes);
 app.use("/api/friends", friendRoutes);
-app.use("/api/chat", chatRoutes);
+app.use("/api/chats", chatRoutes);
+app.use("/api/messages", messageRoutes);
+app.use("/api/groups", groupRoutes);
 app.use("/api/post", postRoutes);
 
 // IMPORTANT: error middleware must be last
