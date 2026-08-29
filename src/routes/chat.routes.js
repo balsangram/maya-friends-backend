@@ -16,18 +16,18 @@ const router = express.Router();
 router.use(authMiddleware);
 
 // Create 1-to-1 private chat
-router.post(["/v1/private", "/private"], createPrivateChat);
+router.post("/private", createPrivateChat);
 
 // Create group
-router.post(["/v1/group", "/group"], upload.single("groupImage"), createGroupChat);
+router.post("/group", upload.single("groupImage"), createGroupChat);
 
 // Get logged-in user's chats
-router.get(["/v1", "/"], getUserChats);
+router.get("/", getUserChats);
 
 // Get particular chat
-router.get(["/v1/:chatId", "/:chatId"], getChatDetails);
+router.get("/:chatId", getChatDetails);
 
 // Delete/deactivate chat
-router.delete(["/v1/:chatId", "/:chatId"], deleteChat);
+router.delete("/:chatId", deleteChat);
 
 export default router;

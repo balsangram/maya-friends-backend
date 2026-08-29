@@ -10,7 +10,7 @@ const router = express.Router();
 
 // Create post
 router.post(
-  "/v1",
+  "/",
   authMiddleware,
   authorize("User"),
   upload.fields([
@@ -26,7 +26,7 @@ router.post(
   createPost
 );
 router.patch(
-  "/v1/:postId",
+  "/:postId",
   authMiddleware,
   authorize("User"),
   upload.fields([
@@ -43,13 +43,13 @@ router.patch(
 );
 // Delete my post
 router.delete(
-  "/v1/:postId",
+  "/:postId",
   authMiddleware,
   authorize("User"),
   deletePost
 );
 router.get(
-  "/v1",
+  "/",
   authMiddleware,
   authorize("User"),
   displayPosts

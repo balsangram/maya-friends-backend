@@ -6,9 +6,9 @@ import authorize from "../middlewares/authorize.middleware.js";
 
 const router = express.Router();
 
-router.get("/v1/",authMiddleware,authorize("User"), displayAllFriends);
-router.post("/v1/add",authMiddleware,authorize("User"), addFriend);
-router.post("/v1/unfriend", authMiddleware, authorize("User"), unfriend);
-router.patch("/v1/block/:friendId", authMiddleware, authorize("User"), blockFriend);
+router.get("/",authMiddleware,authorize("User"), displayAllFriends);
+router.post("/add",authMiddleware,authorize("User"), addFriend);
+router.post("/unfriend", authMiddleware, authorize("User"), unfriend);
+router.patch("block/:friendId", authMiddleware, authorize("User"), blockFriend);
 
 export default router;

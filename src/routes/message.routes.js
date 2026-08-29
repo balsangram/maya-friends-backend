@@ -18,24 +18,24 @@ const router = express.Router();
 router.use(authMiddleware);
 
 // Get messages
-router.get("/v1/chat/:chatId", getChatMessages);
+router.get("/chat/:chatId", getChatMessages);
 
 // Send text/media message
 router.post(
-  "/v1",
+  "/",
   upload.single("file"),
   sendMessage
 );
 // Edit message
-router.patch("/v1/:messageId", editMessage);
+router.patch("/:messageId", editMessage);
 
 // Delete message
-router.delete("/v1/:messageId", deleteMessage);
+router.delete("/:messageId", deleteMessage);
 
 // Forward/share message
-router.post("/v1/:messageId/forward", forwardMessage);
+router.post("/:messageId/forward", forwardMessage);
 
 // Mark message as read
-router.patch("/v1/:messageId/read", markMessageAsRead);
+router.patch("/:messageId/read", markMessageAsRead);
 
 export default router;
