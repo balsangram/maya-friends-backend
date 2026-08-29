@@ -9,6 +9,8 @@ import chatRoutes from "./routes/chat.routes.js";
 import messageRoutes from "./routes/message.routes.js";
 import groupRoutes from "./routes/group.routes.js";
 import postRoutes from "./routes/post.routes.js";
+import postPayment from "./routes/payments.routes.js";
+import postSubscription from "./routes/subscriptions.routes.js";
 import swaggerUi from "swagger-ui-express";
 import swaggerSpec from "./config/swagger.js";
 import ApiError from "./utils/ApiError.js";
@@ -49,14 +51,17 @@ app.get("/", (req, res) => {
    API Routes
 ============================== */
 
-app.use("/api/v1/auth", authRoutes);
-app.use("/api/v1/user", userRoutes);
-app.use("/api/v1/admin", adminRoutes);
-app.use("/api/v1/friends", friendRoutes);
-app.use("/api/v1/chats", chatRoutes);
-app.use("/api/v1/messages", messageRoutes);
-app.use("/api/v1/groups", groupRoutes);
-app.use("/api/v1/post", postRoutes);
+app.use("/api/auth", authRoutes);
+app.use("/api/user", userRoutes);
+app.use("/api/admin", adminRoutes);
+
+app.use("/api/friends", friendRoutes);
+app.use("/api/chats", chatRoutes);
+app.use("/api/messages", messageRoutes);
+app.use("/api/groups", groupRoutes);
+app.use("/api/post", postRoutes);
+app.use("/api/payments", postPayment);
+app.use("/api/subscriptions", postSubscription);
 
 /* ==============================
    404 Handler

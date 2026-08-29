@@ -9,7 +9,11 @@ import logger from "./utils/logger.js";
 
 // Handle uncaught exceptions
 process.on("uncaughtException", (error) => {
-  logger.error("UNCAUGHT EXCEPTION! Shutting down...", error);
+  logger.error(
+    "UNCAUGHT EXCEPTION! Shutting down...",
+    error
+  );
+
   process.exit(1);
 });
 
@@ -30,31 +34,54 @@ const startServer = async () => {
     initializeSocket(server);
 
     // Start server
-    server.listen(env.PORT, "0.0.0.0", () => {
-      console.log(`Server running on port ${env.PORT}`);
-      console.log(`Socket.IO running on port ${env.PORT}`);
-    });
+    server.listen(
+      env.PORT,
+      "0.0.0.0",
+      () => {
+        console.log(
+          `Server running on port ${env.PORT}`
+        );
+
+        console.log(
+          `Socket.IO running on port ${env.PORT}`
+        );
+      }
+    );
   } catch (error) {
-    logger.error("Server startup failed:", error);
+    logger.error(
+      "Server startup failed:",
+      error
+    );
+
     process.exit(1);
   }
 };
 
 // Handle unhandled promise rejections
-process.on("unhandledRejection", (reason, promise) => {
-  logger.error("UNHANDLED REJECTION! Shutting down gracefully...", reason);
-  if (server) {
-    server.close(() => {
+process.on(
+  "unhandledRejection",
+  (reason) => {
+    logger.error(
+      "UNHANDLED REJECTION! Shutting down gracefully...",
+      reason
+    );
+
+    if (server) {
+      server.close(() => {
+        process.exit(1);
+      });
+    } else {
       process.exit(1);
-    });
-  } else {
-    process.exit(1);
+    }
   }
-});
+);
 
 // Handle termination signals
 process.on("SIGTERM", () => {
-  logger.info("SIGTERM received. Shutting down gracefully...");
+  logger.info(
+    "SIGTERM received. Shutting down gracefully..."
+  );
+
   if (server) {
     server.close(() => {
       console.log("Process terminated.");
