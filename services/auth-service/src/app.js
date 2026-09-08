@@ -33,7 +33,7 @@ app.use(
    Health Check
 ============================== */
 
-app.get("/auth_health", (req, res) => {
+app.get("/auth/health", (req, res) => {
   res.json({
     success: true,
     message: "Auth Service API is running",

@@ -33,10 +33,10 @@ app.use(
    Health Check
 ============================== */
 
-app.get("/", (req, res) => {
+app.get("/chat/health", (req, res) => {
   res.json({
     success: true,
-    message: "Maya Friends API is running",
+    message: "Chat Service API is running",
   });
 });
 

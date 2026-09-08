@@ -31,10 +31,10 @@ app.use(
    Health Check
 ============================== */
 
-app.get("/post_health", (req, res) => {
+app.get("/post/health", (req, res) => {
   res.json({
     success: true,
-    message: "Auth Service API is running",
+    message: "Post Service API is running",
   });
 });
 
