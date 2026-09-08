@@ -12,6 +12,7 @@
     "start": "node src/server.js"
   },
   "dependencies": {
+    "@huggingface/transformers": "^4.2.0",
     "bcryptjs": "^3.0.3",
     "cloudinary": "^2.10.1",
     "cors": "^2.8.6",
@@ -25,6 +26,7 @@
     "node-cron": "^4.6.0",
     "nodemailer": "^9.0.5",
     "nodemon": "^3.1.14",
+    "openai": "^7.10.0",
     "razorpay": "^2.9.8",
     "socket.io": "^4.8.3",
     "swagger-jsdoc": "^6.3.0",

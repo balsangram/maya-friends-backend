@@ -15,7 +15,7 @@ import swaggerUi from "swagger-ui-express";
 import swaggerSpec from "./config/swagger.js";
 import ApiError from "./utils/ApiError.js";
 import errorMiddleware from "./middlewares/error.middleware.js";
-
+import ragRoutes from "./routes/rag.route.js";
 const app = express();
 
 /* ==============================
@@ -62,6 +62,12 @@ app.use("/api/groups", groupRoutes);
 app.use("/api/post", postRoutes);
 app.use("/api/payments", postPayment);
 app.use("/api/subscriptions", postSubscription);
+
+
+
+// RAG Routes
+
+app.use("/api/rag", ragRoutes);
 
 /* ==============================
    404 Handler
