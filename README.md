@@ -1,1 +1,1 @@
-# maya-friends-backend
+# FRIENDS

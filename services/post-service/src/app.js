@@ -1,9 +1,7 @@
 import express from "express";
 
 import corsMiddleware from "./middlewares/cors.middleware.js";
-import authRoutes from "./routes/auth.routes.js";
-import adminRoutes from "./routes/admin.routes.js";
-import userRoutes from "./routes/user.routes.js";
+import postRoutes from "./routes/post.routes.js";
 import swaggerUi from "swagger-ui-express";
 import swaggerSpec from "./config/swagger.js";
 import ApiError from "./utils/ApiError.js";
@@ -33,7 +31,7 @@ app.use(
    Health Check
 ============================== */
 
-app.get("/auth_health", (req, res) => {
+app.get("/post_health", (req, res) => {
   res.json({
     success: true,
     message: "Auth Service API is running",
@@ -44,9 +42,7 @@ app.get("/auth_health", (req, res) => {
    API Routes
 ============================== */
 
-app.use("/api/auth", authRoutes);
-app.use("/api/user", userRoutes);
-app.use("/api/admin", adminRoutes);
+app.use("/api/post", postRoutes);
 
 /* ==============================
    404 Handler

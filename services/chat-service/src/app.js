@@ -1,9 +1,9 @@
 import express from "express";
-
 import corsMiddleware from "./middlewares/cors.middleware.js";
-import authRoutes from "./routes/auth.routes.js";
-import adminRoutes from "./routes/admin.routes.js";
-import userRoutes from "./routes/user.routes.js";
+import friendRoutes from "./routes/friend.routes.js";
+import chatRoutes from "./routes/chat.routes.js";
+import messageRoutes from "./routes/message.routes.js";
+import groupRoutes from "./routes/group.routes.js";
 import swaggerUi from "swagger-ui-express";
 import swaggerSpec from "./config/swagger.js";
 import ApiError from "./utils/ApiError.js";
@@ -33,10 +33,10 @@ app.use(
    Health Check
 ============================== */
 
-app.get("/auth_health", (req, res) => {
+app.get("/", (req, res) => {
   res.json({
     success: true,
-    message: "Auth Service API is running",
+    message: "Maya Friends API is running",
   });
 });
 
@@ -44,9 +44,10 @@ app.get("/auth_health", (req, res) => {
    API Routes
 ============================== */
 
-app.use("/api/auth", authRoutes);
-app.use("/api/user", userRoutes);
-app.use("/api/admin", adminRoutes);
+app.use("/api/friends", friendRoutes);
+app.use("/api/chats", chatRoutes);
+app.use("/api/messages", messageRoutes);
+app.use("/api/groups", groupRoutes);
 
 /* ==============================
    404 Handler
