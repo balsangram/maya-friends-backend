@@ -1,16 +1,24 @@
 import express from "express";
 
-
 import authMiddleware from "../middlewares/auth.middleware.js";
 import authorize from "../middlewares/authorize.middleware.js";
 import upload from "../middlewares/upload.middleware.js";
-import { createPost, deletePost, displayPosts, editPost } from "../controllers/post.controller.js";
+
+import {
+  createPost,
+  deletePost,
+  displayPosts,
+  editPost,
+} from "../controllers/post.controller.js";
 
 const router = express.Router();
 
-// Create post
+// ==============================
+// Create Post
+// ==============================
+
 router.post(
-  "/v1/",
+  "/v1",
   authMiddleware,
   authorize("User"),
   upload.fields([
@@ -25,6 +33,11 @@ router.post(
   ]),
   createPost
 );
+
+// ==============================
+// Edit Post
+// ==============================
+
 router.patch(
   "/v1/:postId",
   authMiddleware,
@@ -41,15 +54,24 @@ router.patch(
   ]),
   editPost
 );
-// Delete my post
+
+// ==============================
+// Delete Post
+// ==============================
+
 router.delete(
   "/v1/:postId",
   authMiddleware,
   authorize("User"),
   deletePost
 );
+
+// ==============================
+// Display Posts
+// ==============================
+
 router.get(
-  "/v1/",
+  "/v1",
   authMiddleware,
   authorize("User"),
   displayPosts

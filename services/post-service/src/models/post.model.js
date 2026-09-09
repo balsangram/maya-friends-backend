@@ -19,20 +19,11 @@ const mediaSchema = new mongoose.Schema(
 
 const postSchema = new mongoose.Schema(
   {
-    // ==============================
-    // Post Owner
-    // ==============================
-
     userId: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "Auth",
       required: true,
       index: true,
     },
-
-    // ==============================
-    // Post Content
-    // ==============================
 
     description: {
       type: String,
@@ -41,27 +32,15 @@ const postSchema = new mongoose.Schema(
       maxlength: 5000,
     },
 
-    // ==============================
-    // Images
-    // ==============================
-
     images: {
       type: [mediaSchema],
       default: [],
     },
 
-    // ==============================
-    // Videos
-    // ==============================
-
     videos: {
       type: [mediaSchema],
       default: [],
     },
-
-    // ==============================
-    // Post Status
-    // ==============================
 
     isActive: {
       type: Boolean,

@@ -5,9 +5,7 @@ import Post from "../models/post.model.js";
 // ==============================
 
 export const createPostRepository = async (postData) => {
-  const post = await Post.create(postData);
-
-  return post;
+  return await Post.create(postData);
 };
 
 // ==============================
@@ -15,9 +13,7 @@ export const createPostRepository = async (postData) => {
 // ==============================
 
 export const findPostByIdRepository = async (postId) => {
-  const post = await Post.findById(postId);
-
-  return post;
+  return await Post.findById(postId);
 };
 
 // ==============================
@@ -28,7 +24,7 @@ export const updatePostRepository = async (
   postId,
   updateData
 ) => {
-  const post = await Post.findByIdAndUpdate(
+  return await Post.findByIdAndUpdate(
     postId,
     {
       $set: updateData,
@@ -38,8 +34,6 @@ export const updatePostRepository = async (
       runValidators: true,
     }
   );
-
-  return post;
 };
 
 // ==============================
@@ -47,9 +41,7 @@ export const updatePostRepository = async (
 // ==============================
 
 export const deletePostRepository = async (postId) => {
-  const post = await Post.findByIdAndDelete(postId);
-
-  return post;
+  return await Post.findByIdAndDelete(postId);
 };
 
 // ==============================
@@ -61,25 +53,21 @@ export const findPostsRepository = async (
   skip = 0,
   limit = 10
 ) => {
+  const query = {
+    ...filter,
+    isActive: true,
+  };
+
   const [posts, total] = await Promise.all([
-    Post.find({
-      ...filter,
-      isActive: true,
-    })
-      .populate(
-        "userId",
-        "name username profileImage"
-      )
+    Post.find(query)
       .sort({
         createdAt: -1,
       })
       .skip(skip)
-      .limit(limit),
+      .limit(limit)
+      .lean(),
 
-    Post.countDocuments({
-      ...filter,
-      isActive: true,
-    }),
+    Post.countDocuments(query),
   ]);
 
   return {

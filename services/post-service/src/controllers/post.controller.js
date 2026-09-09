@@ -1,7 +1,23 @@
-import { createPostService, deletePostService, displayPostsService, editPostService } from "../services/post.services.js";
+import {
+  createPostService,
+  deletePostService,
+  displayPostsService,
+  editPostService,
+} from "../services/post.services.js";
+
 import asyncHandler from "../utils/asyncHandler.js";
+
 import ApiError from "../utils/ApiError.js";
-import { getPagination, paginationResponse, successResponse } from "../utils/response.js";
+
+import {
+  getPagination,
+  paginationResponse,
+  successResponse,
+} from "../utils/response.js";
+
+// ==============================
+// Create Post
+// ==============================
 
 export const createPost = asyncHandler(async (req, res) => {
   const userId = req.user.id;
@@ -19,6 +35,10 @@ export const createPost = asyncHandler(async (req, res) => {
     201
   );
 });
+
+// ==============================
+// Edit Post
+// ==============================
 
 export const editPost = asyncHandler(async (req, res) => {
   const userId = req.user.id;
@@ -40,6 +60,10 @@ export const editPost = asyncHandler(async (req, res) => {
   );
 });
 
+// ==============================
+// Delete Post
+// ==============================
+
 export const deletePost = asyncHandler(async (req, res) => {
   const userId = req.user.id;
 
@@ -57,6 +81,10 @@ export const deletePost = asyncHandler(async (req, res) => {
     200
   );
 });
+
+// ==============================
+// Display Posts
+// ==============================
 
 export const displayPosts = asyncHandler(async (req, res) => {
   const userId = req.user.id;
