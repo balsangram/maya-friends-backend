@@ -7,7 +7,7 @@ import {
   createPlan,
   editPlan,
   deletePlan,
-  displayPlans,
+  getAllPlans,
 } from "../controllers/plan.controller.js";
 
 const router = express.Router();
@@ -40,8 +40,8 @@ router.delete(
 router.get(
   "/v1",
   authMiddleware,
-  authorize("Admin"),
-  displayPlans
+  authorize("Admin","User"),
+  getAllPlans
 );
 
 export default router;

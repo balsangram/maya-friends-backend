@@ -6,8 +6,8 @@ export const createPlan = async (data) => {
   return plan;
 };
 
-export const displayPlans = async () => {
-  const plans = await planRepository.getAllPlans();
+export const displayPlans = async ({page, limit, search}) => {
+  const plans = await planRepository.getAllPlans({page, limit, search});
 
   return plans;
 };

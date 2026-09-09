@@ -1,74 +1,46 @@
 import * as planService from "../services/plan.service.js";
+import asyncHandler from "../utils/asyncHandler.js";
+import { paginationResponse, successResponse } from "../utils/response.js";
 
-export const createPlan = async (req, res) => {
-  try {
-    const plan = await planService.createPlan(req.body);
+export const createPlan = asyncHandler(async (req, res) => {
+  const plan = await planService.createPlan(req.body);
+  successResponse(res, "Plan created successfully", plan, 201);
+})
 
-    return res.status(201).json({
-      success: true,
-      message: "Plan created successfully",
-      data: plan,
-    });
-  } catch (error) {
-    return res.status(500).json({
-      success: false,
-      message: error.message,
-    });
-  }
-};
+export const getAllPlans = asyncHandler(async (req, res) => {
+  const { page = 1, limit = 10, search = "" } = req.query;
 
-export const displayPlans = async (req, res) => {
-  try {
-    const plans = await planService.displayPlans();
+  const currentPage = Math.max(Number(page) || 1, 1);
+  const pageLimit = Math.max(Number(limit) || 10, 1);
 
-    return res.status(200).json({
-      success: true,
-      data: plans,
-    });
-  } catch (error) {
-    return res.status(500).json({
-      success: false,
-      message: error.message,
-    });
-  }
-};
+  const result = await planService.displayPlans({
+    page: currentPage,
+    limit: pageLimit,
+    search,
+  });
 
-export const editPlan = async (req, res) => {
-  try {
-    const { planId } = req.params;
+  paginationResponse(
+    res,
+    "Plans retrieved successfully",
+    result.plans,
+    currentPage,
+    pageLimit,
+    result.total,
+    200
+  );
+});
 
-    const plan = await planService.editPlan(
-      planId,
-      req.body
-    );
+export const editPlan = asyncHandler(async (req, res) => {
+  const { planId } = req.params;
+  const plan = await planService.editPlan(
+    planId,
+    req.body
+  );
+  successResponse(res, "Plan updated successfully", plan, 200);
+});
 
-    return res.status(200).json({
-      success: true,
-      message: "Plan updated successfully",
-      data: plan,
-    });
-  } catch (error) {
-    return res.status(404).json({
-      success: false,
-      message: error.message,
-    });
-  }
-};
-
-export const deletePlan = async (req, res) => {
-  try {
-    const { planId } = req.params;
-
-    const result = await planService.deletePlan(planId);
-
-    return res.status(200).json({
-      success: true,
-      ...result,
-    });
-  } catch (error) {
-    return res.status(404).json({
-      success: false,
-      message: error.message,
-    });
-  }
-};
+export const deletePlan = asyncHandler(async (req, res) => {
+  const { planId } = req.params;
+  const result = await planService.deletePlan(planId);
+  successResponse(res, "Plan deleted successfully", result, 200);
+})

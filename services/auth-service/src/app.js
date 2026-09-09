@@ -4,6 +4,9 @@ import corsMiddleware from "./middlewares/cors.middleware.js";
 import authRoutes from "./routes/auth.routes.js";
 import adminRoutes from "./routes/admin.routes.js";
 import userRoutes from "./routes/user.routes.js";
+import paymentRouter from "./routes/payments.routes.js";
+import planRouter from "./routes/plan.routes.js";
+import subscriptionRouter from "./routes/subscriptions.routes.js";
 import swaggerUi from "swagger-ui-express";
 import swaggerSpec from "./config/swagger.js";
 import ApiError from "./utils/ApiError.js";
@@ -47,6 +50,9 @@ app.get("/auth/health", (req, res) => {
 app.use("/api/auth", authRoutes);
 app.use("/api/user", userRoutes);
 app.use("/api/admin", adminRoutes);
+app.use("/api/plan", planRouter);
+app.use("/api/payments", paymentRouter);
+app.use("/api/subscriptions", subscriptionRouter);
 
 /* ==============================
    404 Handler

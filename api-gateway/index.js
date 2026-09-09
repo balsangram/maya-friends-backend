@@ -46,7 +46,7 @@ const proxy = (target) =>
 // Auth Service → 7001
 // ──────────────────────────────────────────────
 app.use(
-  ["/api/auth", "/api/user", "/api/admin", "/auth/health"],
+  ["/api/auth", "/api/user", "/api/admin","/api/plan","/api/payments", "/api/subscriptions", "/auth/health"],
   proxy(process.env.AUTH_SERVICE_URL)
 );
 
@@ -99,5 +99,5 @@ app.use((_req, res) => {
 });
 
 app.listen(PORT, () => {
-  console.log(`🚀 API Gateway running on http://localhost:${PORT}`);
+  console.log(`-_- API Gateway running on http://localhost:${PORT}`);
 });
