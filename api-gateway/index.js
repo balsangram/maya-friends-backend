@@ -1,29 +1,49 @@
 import express from "express";
+import dotenv from "dotenv";
 import { createProxyMiddleware } from "http-proxy-middleware";
 
+dotenv.config();
+
 const app = express();
-const PORT = 7000;
+
+const PORT = process.env.PORT || 7000;
+
+console.log(
+  "AUTH:",
+  process.env.AUTH_SERVICE_URL,
+  "CHAT:",
+  process.env.CHAT_SERVICE_URL,
+  "POST:",
+  process.env.POST_SERVICE_URL
+);
 
 // ──────────────────────────────────────────────
-// Proxy factory — forwards full path, handles errors
+// Proxy factory
 // ──────────────────────────────────────────────
 const proxy = (target) =>
+  // console.log(`Proxying requests to: ${target}`) ||
   createProxyMiddleware({
     target,
     changeOrigin: true,
+    pathRewrite: (path, req) => {
+      // console.log(req,"--------",path);
+      return req.originalUrl;
+    },
+
     on: {
       error: (_err, _req, res) => {
-        res.status(502).json({
-          success: false,
-          message: `Upstream service unavailable (${target})`,
-        });
+        if (!res.headersSent) {
+          res.status(502).json({
+            success: false,
+            message: `Upstream service unavailable (${target})`,
+          });
+        }
       },
     },
   });
 
 // ──────────────────────────────────────────────
 // Auth Service → 7001
-// Routes: /api/auth/v1/*, /api/user/*, /api/admin/*, /auth/health
 // ──────────────────────────────────────────────
 app.use(
   ["/api/auth", "/api/user", "/api/admin", "/auth/health"],
@@ -32,16 +52,20 @@ app.use(
 
 // ──────────────────────────────────────────────
 // Chat Service → 7002
-// Routes: /api/chat/*, /api/friends/*, /api/messages/*, /api/groups/*, /chat/health
 // ──────────────────────────────────────────────
 app.use(
-  ["/api/chat", "/api/friends", "/api/messages", "/api/groups", "/chat/health"],
+  [
+    "/api/chat",
+    "/api/friends",
+    "/api/messages",
+    "/api/groups",
+    "/chat/health",
+  ],
   proxy(process.env.CHAT_SERVICE_URL)
 );
 
 // ──────────────────────────────────────────────
 // Post Service → 7003
-// Routes: /api/post/*, /api/posts/*, /post/health
 // ──────────────────────────────────────────────
 app.use(
   ["/api/post", "/api/posts", "/post/health"],
@@ -49,7 +73,7 @@ app.use(
 );
 
 // ──────────────────────────────────────────────
-// Gateway health check
+// Gateway health
 // ──────────────────────────────────────────────
 app.get("/", (_req, res) => {
   res.json({
@@ -57,18 +81,21 @@ app.get("/", (_req, res) => {
     message: "API Gateway is running",
     port: PORT,
     services: {
-      auth:    process.env.AUTH_SERVICE_URL,
-      chat:    process.env.CHAT_SERVICE_URL,
-      post:    process.env.POST_SERVICE_URL,
+      auth: process.env.AUTH_SERVICE_URL,
+      chat: process.env.CHAT_SERVICE_URL,
+      post: process.env.POST_SERVICE_URL,
     },
   });
 });
 
 // ──────────────────────────────────────────────
-// 404 fallback
+// 404
 // ──────────────────────────────────────────────
 app.use((_req, res) => {
-  res.status(404).json({ success: false, message: "Route not found on gateway" });
+  res.status(404).json({
+    success: false,
+    message: "Route not found on gateway",
+  });
 });
 
 app.listen(PORT, () => {
