@@ -4,11 +4,20 @@ import authMiddleware from "../middlewares/auth.middleware.js";
 import authorize from "../middlewares/authorize.middleware.js";
 
 import {
+  subscribePlan,
   cancelPlan,
   resubscribePlan,
 } from "../controllers/subscription.controller.js";
 
 const router = express.Router();
+
+// Subscribe to a plan
+router.post(
+  "/v1/subscribe",
+  authMiddleware,
+  authorize("User"),
+  subscribePlan
+);
 
 // Cancel subscription
 router.patch(
@@ -18,7 +27,7 @@ router.patch(
   cancelPlan
 );
 
-// Re-subscribe
+// Re-subscribe to the cancelled subscription
 router.patch(
   "/v1/resubscribe",
   authMiddleware,

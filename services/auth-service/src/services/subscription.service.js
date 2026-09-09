@@ -1,10 +1,45 @@
+import { getPlanById } from "../repositories/plan.repository.js";
+
 import {
   findSubscriptionByUserId,
   updateSubscription,
 } from "../repositories/subscription.repository.js";
 
+import razorpay from "../utils/razorpay.js";
 
+// ============================================
+// Subscribe
+// Create Razorpay order
+// ============================================
+export const subscribePlan = async (userId, planId) => {
+  const plan = await getPlanById(planId);
+
+  if (!plan) {
+    throw new Error("Plan not found");
+  }
+
+  if (!plan.isActive) {
+    throw new Error("Plan is not active");
+  }
+
+  const order = await razorpay.orders.create({
+    amount: plan.price * 100,
+    currency: "INR",
+    receipt: `sub_${userId}_${Date.now()}`,
+  });
+
+  return {
+    orderId: order.id,
+    amount: order.amount,
+    currency: order.currency,
+    planId: plan._id,
+    razorpayKey: process.env.RAZORPAY_KEY_ID,
+  };
+};
+
+// ============================================
 // Cancel subscription
+// ============================================
 export const cancelPlan = async (userId) => {
   const subscription =
     await findSubscriptionByUserId(userId);
@@ -14,12 +49,9 @@ export const cancelPlan = async (userId) => {
   }
 
   if (subscription.status !== "active") {
-    throw new Error(
-      "Subscription is not active"
-    );
+    throw new Error("Subscription is not active");
   }
 
-  // Already scheduled for cancellation
   if (subscription.cancelAtPeriodEnd) {
     throw new Error(
       "Subscription is already scheduled for cancellation"
@@ -38,8 +70,10 @@ export const cancelPlan = async (userId) => {
   return updatedSubscription;
 };
 
-
+// ============================================
 // Re-subscribe
+// Create Razorpay order
+// ============================================
 export const resubscribePlan = async (userId) => {
   const subscription =
     await findSubscriptionByUserId(userId);
@@ -50,35 +84,43 @@ export const resubscribePlan = async (userId) => {
 
   const now = new Date();
 
-  // Subscription already expired
-  if (
-    subscription.currentPeriodEnd <= now
-  ) {
+  if (subscription.currentPeriodEnd <= now) {
     throw new Error(
       "Subscription has expired. Please subscribe again."
     );
   }
 
-  // Subscription is already active
   if (
     subscription.status === "active" &&
     !subscription.cancelAtPeriodEnd
   ) {
-    throw new Error(
-      "Subscription is already active"
-    );
+    throw new Error("Subscription is already active");
   }
 
-  const updatedSubscription =
-    await updateSubscription(
-      subscription._id,
-      {
-        status: "active",
-        autoRenew: true,
-        cancelAtPeriodEnd: false,
-        cancelledAt: null,
-      }
-    );
+  const plan = await getPlanById(
+    subscription.planId._id
+  );
 
-  return updatedSubscription;
+  if (!plan) {
+    throw new Error("Plan not found");
+  }
+
+  if (!plan.isActive) {
+    throw new Error("Plan is not active");
+  }
+
+  const order = await razorpay.orders.create({
+    amount: plan.price * 100,
+    currency: "INR",
+    receipt: `resub_${userId}_${Date.now()}`,
+  });
+
+  return {
+    orderId: order.id,
+    amount: order.amount,
+    currency: order.currency,
+    planId: plan._id,
+    subscriptionId: subscription._id,
+    razorpayKey: process.env.RAZORPAY_KEY_ID,
+  };
 };

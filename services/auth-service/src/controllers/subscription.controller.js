@@ -1,60 +1,61 @@
 import {
+  subscribePlan as subscribePlanService,
   cancelPlan as cancelPlanService,
   resubscribePlan as resubscribePlanService,
 } from "../services/subscription.service.js";
 
+import asyncHandler from "../utils/asyncHandler.js";
+import { successResponse } from "../utils/response.js";
+
+// Subscribe → Create Razorpay Order
+export const subscribePlan = asyncHandler(async (req, res) => {
+  const userId = req.user._id;
+  const { planId } = req.body;
+
+  if (!planId) {
+    return res.status(400).json({
+      success: false,
+      message: "Plan ID is required",
+    });
+  }
+
+  const order = await subscribePlanService(
+    userId,
+    planId
+  );
+
+  successResponse(
+    res,
+    "Razorpay order created successfully",
+    order,
+    201
+  );
+});
 
 // Cancel subscription
-export const cancelPlan = async (req, res) => {
-  try {
-    const userId = req.user._id;
+export const cancelPlan = asyncHandler(async (req, res) => {
+  const userId = req.user._id;
 
-    const subscription =
-      await cancelPlanService(userId);
+  const subscription = await cancelPlanService(userId);
 
-    return res.status(200).json({
-      success: true,
-      message:
-        "Subscription will be cancelled at the end of the current period",
-      data: subscription,
-    });
-  } catch (error) {
-    console.error(
-      "Cancel subscription error:",
-      error
-    );
+  successResponse(
+    res,
+    "Subscription cancelled successfully",
+    subscription,
+    200
+  );
+});
 
-    return res.status(400).json({
-      success: false,
-      message: error.message,
-    });
-  }
-};
+// Re-subscribe → Create Razorpay Order
+export const resubscribePlan = asyncHandler(async (req, res) => {
+  const userId = req.user._id;
 
+  const order = await resubscribePlanService(userId);
 
-// Re-subscribe
-export const resubscribePlan = async (req, res) => {
-  try {
-    const userId = req.user._id;
-
-    const subscription =
-      await resubscribePlanService(userId);
-
-    return res.status(200).json({
-      success: true,
-      message:
-        "Subscription reactivated successfully",
-      data: subscription,
-    });
-  } catch (error) {
-    console.error(
-      "Resubscribe error:",
-      error
-    );
-
-    return res.status(400).json({
-      success: false,
-      message: error.message,
-    });
-  }
-};
+  successResponse(
+    res,
+    "Razorpay order created successfully",
+    order,
+    201
+  );
+});

@@ -24,6 +24,7 @@ export const getAllPlans = async ({ page, limit, search }) => {
 
   return { plans, total };
 };
+
 export const getPlanById = async (planId) => {
   return await Plan.findById(planId);
 };

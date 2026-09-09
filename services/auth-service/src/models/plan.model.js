@@ -12,10 +12,10 @@ const planSchema = new mongoose.Schema(
       required: true,
     },
 
-    interval: {
-      type: String,
-      enum: ["month", "year"],
-      default: "month",
+   durationDays: {
+      type: Number,
+      required: true,
+      min: 1,
     },
 
     features: [String],
