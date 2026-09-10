@@ -27,6 +27,7 @@ export const register = asyncHandler(async (req, res) => {
 });
 
 export const login = asyncHandler(async (req, res) => {
+  console.log(req.body,"=======")
   const { email, password ,fcmToken} = req.body;
   const user = await loginUserService({ email, password ,fcmToken});
   const userResponse = {

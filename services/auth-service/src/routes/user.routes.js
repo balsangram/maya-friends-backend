@@ -14,19 +14,19 @@ import { editProfileValidation } from "../validations/user.validation.js";
 
 const router = express.Router();
 
-router.get("/profile", 
+router.get("/v1/profile", 
   authMiddleware, authorize("User"), 
   displayProfile);
-router.patch("/profile",
+router.patch("/v1/profile",
   authMiddleware, authorize("User"),
   upload.single("profileImage"),
   validate(editProfileValidation),
   editProfile);
-router.delete("/profile", 
+router.delete("/v1/profile", 
   authMiddleware, 
   authorize("User"), 
   deleteUser)
 
-router.get("/global-users", authMiddleware, authorize("User"), displayAllGlobalUsers);
+router.get("/v1/global-users", authMiddleware, authorize("User"), displayAllGlobalUsers);
 
 export default router;

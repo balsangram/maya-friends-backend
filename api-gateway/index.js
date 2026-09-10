@@ -1,7 +1,9 @@
 import express from "express";
 import dotenv from "dotenv";
 import { createProxyMiddleware } from "http-proxy-middleware";
+import swaggerUi from "swagger-ui-express";
 
+import swaggerSpec from "./config/swagger.js";
 dotenv.config();
 
 const app = express();
@@ -16,6 +18,17 @@ console.log(
   "POST:",
   process.env.POST_SERVICE_URL
 );
+
+// ============================================================
+// Swagger UI
+// ============================================================
+
+app.use(
+  "/api-docs",
+  swaggerUi.serve,
+  swaggerUi.setup(swaggerSpec)
+);
+
 
 // ──────────────────────────────────────────────
 // Proxy factory

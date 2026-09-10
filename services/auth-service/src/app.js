@@ -22,15 +22,6 @@ app.use(corsMiddleware);
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-/* ==============================
-   Swagger Documentation
-============================== */
-
-app.use(
-  "/api-docs",
-  swaggerUi.serve,
-  swaggerUi.setup(swaggerSpec)
-);
 
 /* ==============================
    Health Check
@@ -53,6 +44,17 @@ app.use("/api/admin", adminRoutes);
 app.use("/api/plan", planRouter);
 app.use("/api/payments", paymentRouter);
 app.use("/api/subscriptions", subscriptionRouter);
+
+/* ==============================
+   Swagger Documentation
+============================== */
+
+app.use(
+  "/api-docs",
+  swaggerUi.serve,
+  swaggerUi.setup(swaggerSpec)
+);
+
 
 /* ==============================
    404 Handler

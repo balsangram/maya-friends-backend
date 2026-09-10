@@ -7,7 +7,7 @@ import {
 
 const router = express.Router();
 
-router.get("/profile", displayProfile);
-router.put("/profile", editProfile);
+router.get("/v1/profile", displayProfile);
+router.put("/v1/profile", editProfile);
 
 export default router;
