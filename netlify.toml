@@ -1,0 +1,17 @@
+# Netlify configuration for the Maya Friends backend monorepo.
+#
+# `base` is set explicitly because values in this file take precedence over the
+# site's UI build settings. The UI base directory was set to an absolute path
+# ("/opt/build"), which Netlify resolves relative to the repository root and
+# therefore could not find, failing every build while parsing configuration.
+# Keeping `base` here pins the build to the repository root regardless of the
+# UI value; clearing the UI field (Site configuration > Build & deploy >
+# Build settings > Base directory) is still recommended.
+
+[build]
+  base = "."
+  publish = "public"
+  command = "echo 'No build step required for this repository.'"
+
+[build.environment]
+  NODE_VERSION = "22"
