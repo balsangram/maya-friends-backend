@@ -9,7 +9,8 @@ import { successResponse } from "../utils/response.js";
 
 // Subscribe → Create Razorpay Order
 export const subscribePlan = asyncHandler(async (req, res) => {
-  const userId = req.user._id;
+  const userId = req.user.id;
+  console.log(req.body,"=====",userId)
   const { planId } = req.body;
 
   if (!planId) {

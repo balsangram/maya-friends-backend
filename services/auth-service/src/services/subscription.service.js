@@ -12,6 +12,7 @@ import razorpay from "../utils/razorpay.js";
 // Create Razorpay order
 // ============================================
 export const subscribePlan = async (userId, planId) => {
+  console.log(userId, planId, "=====")
   const plan = await getPlanById(planId);
 
   if (!plan) {

@@ -26,7 +26,10 @@ export const getAllPlans = async ({ page, limit, search }) => {
 };
 
 export const getPlanById = async (planId) => {
-  return await Plan.findById(planId);
+  console.log("getPlanById called with:", planId);
+  const planData = await Plan.findById(planId);
+  console.log("getPlanById result:", planData);
+  return planData;
 };
 
 export const updatePlan = async (planId, data) => {

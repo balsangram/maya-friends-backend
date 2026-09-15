@@ -202,7 +202,7 @@ export const logoutUserRepository = async (userId, fcmToken, refreshToken) => {
 
 export const findUserRepository = async (userId) => {
   return await User.findById(userId).select(
-    "-password -refreshToken -fcmToken -profileImagePublicId"
+    "+password -refreshToken -fcmToken -profileImagePublicId"
   );
 };
 

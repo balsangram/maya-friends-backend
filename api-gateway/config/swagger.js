@@ -101,10 +101,10 @@ const options = {
       // Auth
       ...authSwagger,
       ...adminSwagger,
+      ...userSwagger,
       ...paymentsSwagger,
       ...planSwagger,
       ...subscriptionsSwagger,
-      ...userSwagger,
 
       // Chat
       ...chatSwagger,
