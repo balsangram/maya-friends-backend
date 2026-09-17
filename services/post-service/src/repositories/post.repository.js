@@ -24,8 +24,10 @@ export const updatePostRepository = async (
   postId,
   updateData
 ) => {
-  return await Post.findByIdAndUpdate(
-    postId,
+  return await Post.findOneAndUpdate(
+    {
+      _id: postId,
+    },
     {
       $set: updateData,
     },

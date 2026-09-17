@@ -42,14 +42,16 @@ export const createPost = asyncHandler(async (req, res) => {
 
 export const editPost = asyncHandler(async (req, res) => {
   const userId = req.user.id;
-
   const { postId } = req.params;
+
+  console.log("User ID:", userId);
+  console.log("Post ID:", postId);
 
   await editPostService(
     userId,
     postId,
     req.body,
-    req.files
+    req.files || {}
   );
 
   return successResponse(
@@ -59,7 +61,6 @@ export const editPost = asyncHandler(async (req, res) => {
     200
   );
 });
-
 // ==============================
 // Delete Post
 // ==============================

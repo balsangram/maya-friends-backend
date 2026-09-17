@@ -2,8 +2,6 @@ import express from "express";
 
 import corsMiddleware from "./middlewares/cors.middleware.js";
 import postRoutes from "./routes/post.routes.js";
-import swaggerUi from "swagger-ui-express";
-import swaggerSpec from "./config/swagger.js";
 import ApiError from "./utils/ApiError.js";
 import errorMiddleware from "./middlewares/error.middleware.js";
 
@@ -17,15 +15,6 @@ app.use(corsMiddleware);
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-/* ==============================
-   Swagger Documentation
-============================== */
-
-app.use(
-  "/api-docs",
-  swaggerUi.serve,
-  swaggerUi.setup(swaggerSpec)
-);
 
 /* ==============================
    Health Check

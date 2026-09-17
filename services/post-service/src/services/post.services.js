@@ -35,10 +35,6 @@ const uploadImages = async (files = []) => {
   return images;
 };
 
-// ======================================================
-// Helper: Upload Videos
-// ======================================================
-
 const uploadVideos = async (files = []) => {
   const videos = [];
 
@@ -56,7 +52,6 @@ const uploadVideos = async (files = []) => {
 
   return videos;
 };
-
 // ======================================================
 // Helper: Delete Media
 // ======================================================
@@ -157,22 +152,20 @@ export const editPostService = async (
   updateData = {},
   files = {}
 ) => {
-  // ------------------------------------------
+  // ==========================================
   // Find Post
-  // ------------------------------------------
+  // ==========================================
 
   const existingPost =
     await findPostByIdRepository(postId);
 
   if (!existingPost) {
-    throw ApiError.notFound(
-      "Post not found"
-    );
+    throw ApiError.notFound("Post not found");
   }
 
-  // ------------------------------------------
+  // ==========================================
   // Check Owner
-  // ------------------------------------------
+  // ==========================================
 
   if (
     existingPost.userId.toString() !==
@@ -183,113 +176,275 @@ export const editPostService = async (
     );
   }
 
-  // ------------------------------------------
-  // Only allow editable fields
-  // ------------------------------------------
+  // ==========================================
+  // Check Updates
+  // ==========================================
 
-  const postData = {};
-
-  if (
+  const hasDescription =
     Object.prototype.hasOwnProperty.call(
       updateData,
       "description"
-    )
-  ) {
-    postData.description =
+    );
+
+  const hasImages =
+    Array.isArray(files?.images) &&
+    files.images.length > 0;
+
+  const hasVideos =
+    Array.isArray(files?.videos) &&
+    files.videos.length > 0;
+
+  if (!hasDescription && !hasImages && !hasVideos) {
+    throw ApiError.badRequest(
+      "Please provide something to update"
+    );
+  }
+
+  // ==========================================
+  // Prepare MongoDB Update
+  // ==========================================
+
+  const postData = {};
+
+  // ==========================================
+  // Description
+  // ==========================================
+
+  if (hasDescription) {
+    const description =
       typeof updateData.description === "string"
         ? updateData.description.trim()
         : "";
+
+    if (!description) {
+      throw ApiError.badRequest(
+        "Description cannot be empty"
+      );
+    }
+
+    postData.description = description;
   }
+
+  // ==========================================
+  // IMAGE MEDIA IDs
+  // ==========================================
+
+  let imageMediaIds = [];
+
+  if (hasImages) {
+    imageMediaIds = updateData.imageMediaIds;
+
+    if (typeof imageMediaIds === "string") {
+      try {
+        imageMediaIds =
+          JSON.parse(imageMediaIds);
+      } catch (error) {
+        throw ApiError.badRequest(
+          "imageMediaIds must be a valid JSON array"
+        );
+      }
+    }
+
+    if (!Array.isArray(imageMediaIds)) {
+      throw ApiError.badRequest(
+        "imageMediaIds must be an array"
+      );
+    }
+
+    if (
+      imageMediaIds.length !==
+      files.images.length
+    ) {
+      throw ApiError.badRequest(
+        "Number of imageMediaIds must match number of images"
+      );
+    }
+  }
+
+  // ==========================================
+  // VIDEO MEDIA IDs
+  // ==========================================
+
+  let videoMediaIds = [];
+
+  if (hasVideos) {
+    videoMediaIds = updateData.videoMediaIds;
+
+    if (typeof videoMediaIds === "string") {
+      try {
+        videoMediaIds =
+          JSON.parse(videoMediaIds);
+      } catch (error) {
+        throw ApiError.badRequest(
+          "videoMediaIds must be a valid JSON array"
+        );
+      }
+    }
+
+    if (!Array.isArray(videoMediaIds)) {
+      throw ApiError.badRequest(
+        "videoMediaIds must be an array"
+      );
+    }
+
+    if (
+      videoMediaIds.length !==
+      files.videos.length
+    ) {
+      throw ApiError.badRequest(
+        "Number of videoMediaIds must match number of videos"
+      );
+    }
+  }
+
+  // ==========================================
+  // Copy Existing Media
+  // ==========================================
+
+  const updatedImages = [
+    ...(existingPost.images || []),
+  ];
+
+  const updatedVideos = [
+    ...(existingPost.videos || []),
+  ];
+
+  const oldImages = [];
+  const oldVideos = [];
 
   const newImages = [];
   const newVideos = [];
 
-  try {
-    // ==========================================
-    // New Images
-    // ==========================================
+  // ==========================================
+  // Upload Multiple Images
+  // ==========================================
 
-    if (files?.images?.length) {
-      const images = await uploadImages(
-        files.images
+  if (hasImages) {
+    const uploadedImages =
+      await uploadImages(files.images);
+
+    for (let i = 0; i < imageMediaIds.length; i++) {
+      const mediaId =
+        imageMediaIds[i]?.trim();
+
+      if (!mediaId) {
+        throw ApiError.badRequest(
+          `imageMediaIds[${i}] is required`
+        );
+      }
+
+      const imageIndex =
+        updatedImages.findIndex(
+          (image) =>
+            image.mediaId === mediaId
+        );
+
+      if (imageIndex === -1) {
+        throw ApiError.notFound(
+          `Image not found: ${mediaId}`
+        );
+      }
+
+      // Save old image
+      oldImages.push(
+        updatedImages[imageIndex]
       );
 
-      newImages.push(...images);
+      // Save new image
+      newImages.push(
+        uploadedImages[i]
+      );
 
-      /*
-        Replace old images with new images.
-      */
-      postData.images = images;
+      // Replace image
+      updatedImages[imageIndex] =
+        uploadedImages[i];
     }
 
-    // ==========================================
-    // New Videos
-    // ==========================================
-
-    if (files?.videos?.length) {
-      const videos = await uploadVideos(
-        files.videos
-      );
-
-      newVideos.push(...videos);
-
-      /*
-        Replace old videos with new videos.
-      */
-      postData.videos = videos;
-    }
-
-    // ==========================================
-    // Update MongoDB
-    // ==========================================
-
-    const updatedPost =
-      await updatePostRepository(
-        postId,
-        postData
-      );
-
-    if (!updatedPost) {
-      throw ApiError.notFound(
-        "Post not found"
-      );
-    }
-
-    // ==========================================
-    // Delete Old Images
-    // ==========================================
-
-    if (files?.images?.length) {
-      await deleteMedia(
-        existingPost.images
-      );
-    }
-
-    // ==========================================
-    // Delete Old Videos
-    // ==========================================
-
-    if (files?.videos?.length) {
-      await deleteMedia(
-        existingPost.videos
-      );
-    }
-
-    return updatedPost;
-
-  } catch (error) {
-    /*
-      If MongoDB update fails after uploading
-      new media, remove newly uploaded files.
-    */
-
-    await deleteMedia(newImages);
-    await deleteMedia(newVideos);
-
-    throw error;
+    postData.images = updatedImages;
   }
-};
 
+  // ==========================================
+  // Upload Multiple Videos
+  // ==========================================
+
+  if (hasVideos) {
+    const uploadedVideos =
+      await uploadVideos(files.videos);
+
+    for (let i = 0; i < videoMediaIds.length; i++) {
+      const mediaId =
+        videoMediaIds[i]?.trim();
+
+      if (!mediaId) {
+        throw ApiError.badRequest(
+          `videoMediaIds[${i}] is required`
+        );
+      }
+
+      const videoIndex =
+        updatedVideos.findIndex(
+          (video) =>
+            video.mediaId === mediaId
+        );
+
+      if (videoIndex === -1) {
+        throw ApiError.notFound(
+          `Video not found: ${mediaId}`
+        );
+      }
+
+      // Save old video
+      oldVideos.push(
+        updatedVideos[videoIndex]
+      );
+
+      // Save new video
+      newVideos.push(
+        uploadedVideos[i]
+      );
+
+      // Replace video
+      updatedVideos[videoIndex] =
+        uploadedVideos[i];
+    }
+
+    postData.videos = updatedVideos;
+  }
+
+  // ==========================================
+  // Update MongoDB
+  // ==========================================
+
+  const updatedPost =
+    await updatePostRepository(
+      postId,
+      postData
+    );
+
+  if (!updatedPost) {
+    throw ApiError.notFound(
+      "Post not found"
+    );
+  }
+
+  // ==========================================
+  // Delete Old Images
+  // ==========================================
+
+  if (oldImages.length > 0) {
+    await deleteMedia(oldImages);
+  }
+
+  // ==========================================
+  // Delete Old Videos
+  // ==========================================
+
+  if (oldVideos.length > 0) {
+    await deleteMedia(oldVideos);
+  }
+
+  return updatedPost;
+};
 // ======================================================
 // DELETE POST
 // ======================================================
