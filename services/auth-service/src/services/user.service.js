@@ -1,5 +1,12 @@
+import mongoose from "mongoose";
 import { findUserById, findUserRepository } from "../repositories/auth.repository.js";
-import { deleteUserById, findAllGlobalUsers, updateUserProfile } from "../repositories/user.repository.js";
+import {
+  deleteUserById,
+  findAllGlobalUsers,
+  findUserByIdRepository,
+  findUsersByIdsRepository,
+  updateUserProfile,
+} from "../repositories/user.repository.js";
 import { deleteFromCloudinary, uploadToCloudinary } from "../utils/cloudinary.js";
 import { getPagination } from "../utils/response.js";
 import ApiError from "../utils/ApiError.js";
@@ -43,6 +50,8 @@ export const editProfileService = async (
 
     profileData.profileImage = uploadedImage.url;
     profileData.profileImagePublicId = uploadedImage.publicId;
+    // Keep legacy `image` field in sync for list/populate consumers
+    profileData.image = uploadedImage.url;
 
     oldProfileImagePublicId = existingUser.profileImagePublicId;
   }
@@ -112,4 +121,39 @@ export const deleteUserService = async (userId) => {
   await deleteUserById(userId);
 
   return true;
+};
+
+
+/**
+ * Get user by ID
+ */
+export const getUserByIdService = async (userId) => {
+  if (!mongoose.Types.ObjectId.isValid(userId)) {
+    return null;
+  }
+
+  const user = await findUserByIdRepository(userId);
+
+  return user;
+};
+
+/**
+ * Get multiple users by IDs
+ */
+export const getUsersByIdsService = async (userIds) => {
+  if (!Array.isArray(userIds) || userIds.length === 0) {
+    return [];
+  }
+
+  const validUserIds = userIds.filter((id) =>
+    mongoose.Types.ObjectId.isValid(id)
+  );
+
+  if (validUserIds.length === 0) {
+    return [];
+  }
+
+  const users = await findUsersByIdsRepository(validUserIds);
+
+  return users;
 };

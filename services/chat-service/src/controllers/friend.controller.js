@@ -1,7 +1,22 @@
-import { addFriendService, blockFriendService, displayAllFriendsService, unfriendService } from "../services/friends.service.js";
-import asyncHandler from "../utils/asyncHandler.js";
-import { getPagination, paginationResponse, successResponse } from "../utils/response.js";
+import {
+  addFriendService,
+  blockFriendService,
+  displayAllFriendsService,
+  unfriendService,
+} from "../services/friends.service.js";
 
+import asyncHandler from "../utils/asyncHandler.js";
+
+import {
+  getPagination,
+  paginationResponse,
+  successResponse,
+} from "../utils/response.js";
+
+
+// ===============================
+// Display Friends / Blocked Users
+// ===============================
 export const displayAllFriends = asyncHandler(async (req, res) => {
   const userId = req.user.id;
 
@@ -12,7 +27,11 @@ export const displayAllFriends = asyncHandler(async (req, res) => {
     limit = 10,
   } = req.query;
 
-  const isBlockUser = blockUser === "true";
+  // ?blockUser=true → only blocked users
+  // ?blockUser=false or omitted → only friends
+  const isBlockUser = ["true", "1", "yes"].includes(
+    String(blockUser).toLowerCase()
+  );
 
   const {
     page: currentPage,
@@ -22,16 +41,17 @@ export const displayAllFriends = asyncHandler(async (req, res) => {
 
   const result = await displayAllFriendsService(
     userId,
-    search,
+    search.trim(),
     isBlockUser,
     skip,
     pageLimit
   );
 
   const friendData = result.data.map((friend) => ({
-    userId: friend.userId?._id,
-    username: friend.userId?.username || null,
-    image: friend.userId?.image || null,
+    userId: friend.userId,
+    username: friend.username || null,
+    name: friend.name || null,
+    image: friend.image || null,
     type: friend.type,
   }));
 
@@ -49,11 +69,14 @@ export const displayAllFriends = asyncHandler(async (req, res) => {
 });
 
 
+// ===============================
+// Add Friend
+// ===============================
 export const addFriend = asyncHandler(async (req, res) => {
   const userId = req.user.id;
   const { friendId } = req.body;
 
-  const friend = await addFriendService(userId, friendId);
+  await addFriendService(userId, friendId);
 
   return successResponse(
     res,
@@ -62,11 +85,16 @@ export const addFriend = asyncHandler(async (req, res) => {
     200
   );
 });
+
+
+// ===============================
+// Unfriend
+// ===============================
 export const unfriend = asyncHandler(async (req, res) => {
   const userId = req.user.id;
   const { friendId } = req.body;
 
-  const result = await unfriendService(userId, friendId);
+  await unfriendService(userId, friendId);
 
   return successResponse(
     res,
@@ -75,6 +103,11 @@ export const unfriend = asyncHandler(async (req, res) => {
     200
   );
 });
+
+
+// ===============================
+// Block / Unblock Friend
+// ===============================
 export const blockFriend = asyncHandler(async (req, res) => {
   const userId = req.user.id;
   const { friendId } = req.params;
@@ -87,7 +120,7 @@ export const blockFriend = asyncHandler(async (req, res) => {
     });
   }
 
-  const result = await blockFriendService(
+  await blockFriendService(
     userId,
     friendId,
     action

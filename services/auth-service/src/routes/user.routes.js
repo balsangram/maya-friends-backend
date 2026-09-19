@@ -5,6 +5,8 @@ import {
   displayAllGlobalUsers,
   displayProfile,
   editProfile,
+  getUserById,
+  getUsersByIds,
 } from "../controllers/user.controller.js";
 import authMiddleware from "../middlewares/auth.middleware.js";
 import authorize from "../middlewares/authorize.middleware.js";
@@ -28,5 +30,9 @@ router.delete("/v1/profile",
   deleteUser)
 
 router.get("/v1/global-users", authMiddleware, authorize("User"), displayAllGlobalUsers);
+
+// Internal service-to-service endpoints
+router.get("/v1/internal/:userId", getUserById);
+router.post("/v1/internal/by-ids", getUsersByIds);
 
 export default router;

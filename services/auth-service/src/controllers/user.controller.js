@@ -1,4 +1,4 @@
-import { deleteUserService, displayAllGlobalUsersService, displayUserDetailsService, editProfileService } from "../services/user.service.js";
+import { deleteUserService, displayAllGlobalUsersService, displayUserDetailsService, editProfileService, getUserByIdService, getUsersByIdsService } from "../services/user.service.js";
 import asyncHandler from "../utils/asyncHandler.js";
 import ApiError from "../utils/ApiError.js";
 import { paginationResponse, successResponse } from "../utils/response.js";
@@ -97,4 +97,52 @@ export const deleteUser = asyncHandler(async (req, res) => {
     res,
     "User deleted successfully"
   );
+});
+
+/**
+ * Get user by ID
+ *
+ * GET /v1/internal/:userId
+ */
+export const getUserById = asyncHandler(async (req, res) => {
+  const { userId } = req.params;
+
+  const user = await getUserByIdService(userId);
+
+  if (!user) {
+    return res.status(404).json({
+      success: false,
+      message: "User not found",
+    });
+  }
+
+  return res.status(200).json({
+    success: true,
+    message: "User fetched successfully",
+    data: user,
+  });
+});
+
+/**
+ * Get multiple users by IDs
+ *
+ * POST /v1/internal/by-ids
+ */
+export const getUsersByIds = asyncHandler(async (req, res) => {
+  const { userIds } = req.body;
+
+  if (!Array.isArray(userIds) || userIds.length === 0) {
+    return res.status(400).json({
+      success: false,
+      message: "userIds must be a non-empty array",
+    });
+  }
+
+  const users = await getUsersByIdsService(userIds);
+
+  return res.status(200).json({
+    success: true,
+    message: "Users fetched successfully",
+    data: users,
+  });
 });

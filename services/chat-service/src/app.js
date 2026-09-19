@@ -4,8 +4,6 @@ import friendRoutes from "./routes/friend.routes.js";
 import chatRoutes from "./routes/chat.routes.js";
 import messageRoutes from "./routes/message.routes.js";
 import groupRoutes from "./routes/group.routes.js";
-import swaggerUi from "swagger-ui-express";
-import swaggerSpec from "./config/swagger.js";
 import ApiError from "./utils/ApiError.js";
 import errorMiddleware from "./middlewares/error.middleware.js";
 
@@ -18,16 +16,6 @@ const app = express();
 app.use(corsMiddleware);
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-
-/* ==============================
-   Swagger Documentation
-============================== */
-
-app.use(
-  "/api-docs",
-  swaggerUi.serve,
-  swaggerUi.setup(swaggerSpec)
-);
 
 /* ==============================
    Health Check

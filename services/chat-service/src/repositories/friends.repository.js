@@ -1,29 +1,21 @@
-import Auth from "../models/auth.models.js";
 import Friends from "../models/friends.model.js";
 
+
+// ========================================
+// Display Friends / Blocked Friends
+// ========================================
 export const displayAllFriendsRepository = async (
   userId,
-  search,
-  blockUser,
-  skip,
-  limit
+  blockUser
 ) => {
   const field = blockUser
     ? "blockedFriends"
     : "friends";
 
-  const data = await Friends.findOne({ userId }).populate({
-    path: `${field}.userId`,
-    select: "username image",
-    match: search
-      ? {
-          username: {
-            $regex: search,
-            $options: "i",
-          },
-        }
-      : {},
-  });
+  const data = await Friends.findOne(
+    { userId },
+    { [field]: 1, _id: 0 }
+  ).lean();
 
   if (!data) {
     return {
@@ -32,35 +24,34 @@ export const displayAllFriendsRepository = async (
     };
   }
 
-  const filteredFriends = data[field].filter(
-    (friend) => friend.userId
-  );
-
-  const total = filteredFriends.length;
-
-  const paginatedFriends = filteredFriends.slice(
-    skip,
-    skip + limit
-  );
+  const friends = data[field] || [];
 
   return {
-    data: paginatedFriends,
-    total,
+    data: friends,
+    total: friends.length,
   };
 };
 
-export const findUserByIdRepository = async (userId) => {
-  const user = await Auth.findById(userId).select("name image");
 
-  console.log(user, "---user");
-
-  return user;
-};
-
-export const addFriendRepository = async (userId, friendId) => {
+// ========================================
+// Add Friend
+// ========================================
+export const addFriendRepository = async (
+  userId,
+  friendId
+) => {
   return await Friends.findOneAndUpdate(
     { userId },
+
     {
+      // Remove from blocked list if present
+      $pull: {
+        blockedFriends: {
+          userId: friendId,
+        },
+      },
+
+      // Add to friends
       $addToSet: {
         friends: {
           userId: friendId,
@@ -68,15 +59,29 @@ export const addFriendRepository = async (userId, friendId) => {
         },
       },
     },
+
     {
-      returnDocument: "after",
+      new: true,
       upsert: true,
+      runValidators: true,
     }
   );
 };
-export const unfriendRepository = async (userId, friendId) => {
+
+
+// ========================================
+// Unfriend
+// ========================================
+export const unfriendRepository = async (
+  userId,
+  friendId
+) => {
   return await Friends.findOneAndUpdate(
-    { userId },
+    {
+      userId,
+      "friends.userId": friendId,
+    },
+
     {
       $pull: {
         friends: {
@@ -84,58 +89,88 @@ export const unfriendRepository = async (userId, friendId) => {
         },
       },
     },
+
     {
       new: true,
     }
   );
 };
 
+
+// ========================================
+// Block / Unblock Friend
+// ========================================
 export const blockFriendRepository = async (
   userId,
   friendId,
-  name,
-  image,
   action
 ) => {
-  const friendData = {
-    userId: friendId,
-    name,
-    image,
-    type: "friend",
-  };
-
+  // -----------------------------
+  // BLOCK
+  // -----------------------------
   if (action === "block") {
     return await Friends.findOneAndUpdate(
       { userId },
+
       {
+        // Remove from friends
         $pull: {
-          friends: { userId: friendId },
+          friends: {
+            userId: friendId,
+          },
         },
+
+        // Add to blocked friends
         $addToSet: {
-          blockedFriends: friendData,
+          blockedFriends: {
+            userId: friendId,
+            type: "friend",
+          },
         },
       },
+
       {
         new: true,
         upsert: true,
+        runValidators: true,
       }
     );
   }
 
+
+  // -----------------------------
+  // UNBLOCK
+  // -----------------------------
   if (action === "unblock") {
     return await Friends.findOneAndUpdate(
-      { userId },
       {
+        userId,
+        "blockedFriends.userId": friendId,
+      },
+
+      {
+        // Remove from blocked friends
         $pull: {
-          blockedFriends: { userId: friendId },
+          blockedFriends: {
+            userId: friendId,
+          },
         },
+
+        // Add back to friends
         $addToSet: {
-          friends: friendData,
+          friends: {
+            userId: friendId,
+            type: "friend",
+          },
         },
       },
+
       {
         new: true,
+        runValidators: true,
       }
     );
   }
+
+  return null;
 };

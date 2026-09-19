@@ -4,7 +4,6 @@ const friendType = new mongoose.Schema(
   {
     userId: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "Auth",
       required: true,
     },
 
@@ -23,7 +22,6 @@ const friendsSchema = new mongoose.Schema(
   {
     userId: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "Auth",
       required: true,
       unique: true,
     },

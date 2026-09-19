@@ -68,3 +68,37 @@ export const updateUserProfile = async (
 export const deleteUserById = async (userId) => {
   return await User.findByIdAndDelete(userId);
 };
+
+const toPublicUser = (user) => {
+  if (!user) return null;
+
+  const image = user.profileImage || user.image || null;
+
+  return {
+    _id: user._id,
+    name: user.name || user.username || null,
+    username: user.username || null,
+    image: image && String(image).trim() ? image : null,
+  };
+};
+
+export const findUserByIdRepository = async (userId) => {
+  const user = await User.findById(userId)
+    .select("_id name username image profileImage")
+    .lean();
+
+  return toPublicUser(user);
+};
+
+/**
+ * Get multiple users by IDs
+ */
+export const findUsersByIdsRepository = async (userIds) => {
+  const users = await User.find({
+    _id: { $in: userIds },
+  })
+    .select("_id name username image profileImage")
+    .lean();
+
+  return users.map(toPublicUser);
+};

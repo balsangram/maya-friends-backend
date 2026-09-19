@@ -13,13 +13,13 @@ let server;
 
 const startServer = async () => {
   try {
-    // Auth service connects to DB
+    // Connect to database
     await connectDB();
 
     server = http.createServer(app);
 
     server.listen(env.PORT, "0.0.0.0", () => {
-      console.log(`🔐 Auth Service running on port ${env.PORT}`);
+      console.log(`Chat Service running on port ${env.PORT}`);
     });
   } catch (error) {
     logger.error("Server startup failed:", error);
@@ -44,7 +44,7 @@ process.on("SIGTERM", () => {
 
   if (server) {
     server.close(() => {
-      console.log("Auth Service terminated.");
+      console.log("Chat Service terminated.");
     });
   }
 });
