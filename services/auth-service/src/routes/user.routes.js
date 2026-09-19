@@ -31,8 +31,18 @@ router.delete("/v1/profile",
 
 router.get("/v1/global-users", authMiddleware, authorize("User"), displayAllGlobalUsers);
 
-// Internal service-to-service endpoints
-router.get("/v1/internal/:userId", getUserById);
-router.post("/v1/internal/by-ids", getUsersByIds);
+router.get(
+  "/v1/internal/:userId",
+  authMiddleware,
+  authorize("User"),
+  getUserById
+);
+
+router.post(
+  "/v1/internal/by-ids",
+  authMiddleware,
+  authorize("User"),
+  getUsersByIds
+);
 
 export default router;
