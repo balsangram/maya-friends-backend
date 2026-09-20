@@ -1,31 +1,21 @@
+const bearer = [{ bearerAuth: [] }];
+
 const adminSwagger = {
-  "/admin/profile": {
+  "/api/admin/v1/profile": {
     get: {
       tags: ["Admin"],
       summary: "Get admin profile",
-      security: [
-        {
-          bearerAuth: [],
-        },
-      ],
+      security: bearer,
       responses: {
-        200: {
-          description: "Admin profile retrieved successfully",
-        },
-        401: {
-          description: "Unauthorized",
-        },
+        200: { description: "Admin profile retrieved successfully" },
+        401: { description: "Unauthorized" },
+        403: { description: "Forbidden" },
       },
     },
-
     put: {
       tags: ["Admin"],
       summary: "Update admin profile",
-      security: [
-        {
-          bearerAuth: [],
-        },
-      ],
+      security: bearer,
       requestBody: {
         required: true,
         content: {
@@ -33,17 +23,11 @@ const adminSwagger = {
             schema: {
               type: "object",
               properties: {
-                name: {
+                name: { type: "string", example: "Admin" },
+                phone: { type: "string", example: "9876543210" },
+                image: {
                   type: "string",
-                  example: "Admin",
-                },
-                email: {
-                  type: "string",
-                  example: "admin@example.com",
-                },
-                phone: {
-                  type: "string",
-                  example: "9876543210",
+                  example: "https://example.com/admin.jpg",
                 },
               },
             },
@@ -51,12 +35,9 @@ const adminSwagger = {
         },
       },
       responses: {
-        200: {
-          description: "Admin profile updated successfully",
-        },
-        401: {
-          description: "Unauthorized",
-        },
+        200: { description: "Admin profile updated successfully" },
+        401: { description: "Unauthorized" },
+        403: { description: "Forbidden" },
       },
     },
   },

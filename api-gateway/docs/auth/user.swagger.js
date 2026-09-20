@@ -367,6 +367,40 @@ const userSwagger = {
     },
   },
   },
+
+  "/api/user/v1/global-users": {
+    get: {
+      tags: ["Users"],
+      summary: "List global users",
+      description: "Paginated list of users with optional search.",
+      security: [
+        {
+          bearerAuth: [],
+        },
+      ],
+      parameters: [
+        {
+          name: "page",
+          in: "query",
+          schema: { type: "integer", default: 1 },
+        },
+        {
+          name: "limit",
+          in: "query",
+          schema: { type: "integer", default: 10 },
+        },
+        {
+          name: "search",
+          in: "query",
+          schema: { type: "string" },
+        },
+      ],
+      responses: {
+        200: { description: "Global users fetched successfully" },
+        401: { description: "Unauthorized" },
+      },
+    },
+  },
 };
 
 export default userSwagger;

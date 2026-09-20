@@ -1,177 +1,36 @@
+const bearer = [{ bearerAuth: [] }];
+
 const groupSwagger = {
-  "/groups": {
+  "/api/groups/{groupId}/members": {
     get: {
       tags: ["Groups"],
-      summary: "Get user groups",
-      security: [{ bearerAuth: [] }],
-
-      responses: {
-        200: {
-          description: "Groups retrieved successfully",
+      summary: "Get group members",
+      security: bearer,
+      parameters: [
+        {
+          name: "groupId",
+          in: "path",
+          required: true,
+          schema: { type: "string" },
         },
+      ],
+      responses: {
+        200: { description: "Group members fetched successfully" },
+        401: { description: "Unauthorized" },
       },
     },
-
     post: {
       tags: ["Groups"],
-      summary: "Create group",
-      security: [{ bearerAuth: [] }],
-
-      requestBody: {
-        required: true,
-        content: {
-          "application/json": {
-            schema: {
-              type: "object",
-              required: ["name", "users"],
-              properties: {
-                name: {
-                  type: "string",
-                  example: "Maya Friends",
-                },
-                description: {
-                  type: "string",
-                  example: "Friends group",
-                },
-                users: {
-                  type: "array",
-                  items: {
-                    type: "string",
-                  },
-                  example: [
-                    "66c123456789",
-                    "66c987654321",
-                  ],
-                },
-              },
-            },
-          },
-        },
-      },
-
-      responses: {
-        201: {
-          description: "Group created successfully",
-        },
-        400: {
-          description: "Invalid request",
-        },
-      },
-    },
-  },
-
-  "/groups/{groupId}": {
-    get: {
-      tags: ["Groups"],
-      summary: "Get group by ID",
-      security: [{ bearerAuth: [] }],
-
+      summary: "Add group member",
+      security: bearer,
       parameters: [
         {
           name: "groupId",
           in: "path",
           required: true,
-          schema: {
-            type: "string",
-          },
+          schema: { type: "string" },
         },
       ],
-
-      responses: {
-        200: {
-          description: "Group retrieved successfully",
-        },
-        404: {
-          description: "Group not found",
-        },
-      },
-    },
-
-    put: {
-      tags: ["Groups"],
-      summary: "Update group",
-      security: [{ bearerAuth: [] }],
-
-      parameters: [
-        {
-          name: "groupId",
-          in: "path",
-          required: true,
-          schema: {
-            type: "string",
-          },
-        },
-      ],
-
-      requestBody: {
-        required: true,
-        content: {
-          "application/json": {
-            schema: {
-              type: "object",
-              properties: {
-                name: {
-                  type: "string",
-                  example: "Updated Group",
-                },
-                description: {
-                  type: "string",
-                  example: "Updated description",
-                },
-              },
-            },
-          },
-        },
-      },
-
-      responses: {
-        200: {
-          description: "Group updated successfully",
-        },
-      },
-    },
-
-    delete: {
-      tags: ["Groups"],
-      summary: "Delete group",
-      security: [{ bearerAuth: [] }],
-
-      parameters: [
-        {
-          name: "groupId",
-          in: "path",
-          required: true,
-          schema: {
-            type: "string",
-          },
-        },
-      ],
-
-      responses: {
-        200: {
-          description: "Group deleted successfully",
-        },
-      },
-    },
-  },
-
-  "/groups/{groupId}/members": {
-    post: {
-      tags: ["Groups"],
-      summary: "Add member to group",
-      security: [{ bearerAuth: [] }],
-
-      parameters: [
-        {
-          name: "groupId",
-          in: "path",
-          required: true,
-          schema: {
-            type: "string",
-          },
-        },
-      ],
-
       requestBody: {
         required: true,
         content: {
@@ -180,53 +39,194 @@ const groupSwagger = {
               type: "object",
               required: ["userId"],
               properties: {
-                userId: {
-                  type: "string",
-                  example: "66c123456789",
-                },
+                userId: { type: "string" },
               },
             },
           },
         },
       },
-
       responses: {
-        200: {
-          description: "Member added successfully",
-        },
+        200: { description: "Member added successfully" },
+        400: { description: "Bad request" },
       },
     },
   },
 
-  "/groups/{groupId}/members/{userId}": {
+  "/api/groups/{groupId}/members/{userId}": {
     delete: {
       tags: ["Groups"],
-      summary: "Remove member from group",
-      security: [{ bearerAuth: [] }],
-
+      summary: "Remove group member",
+      security: bearer,
       parameters: [
         {
           name: "groupId",
           in: "path",
           required: true,
-          schema: {
-            type: "string",
-          },
+          schema: { type: "string" },
         },
         {
           name: "userId",
           in: "path",
           required: true,
-          schema: {
-            type: "string",
-          },
+          schema: { type: "string" },
         },
       ],
-
       responses: {
-        200: {
-          description: "Member removed successfully",
+        200: { description: "Member removed successfully" },
+        404: { description: "Member not found" },
+      },
+    },
+  },
+
+  "/api/groups/{groupId}/members/{userId}/block": {
+    patch: {
+      tags: ["Groups"],
+      summary: "Block group member",
+      security: bearer,
+      parameters: [
+        {
+          name: "groupId",
+          in: "path",
+          required: true,
+          schema: { type: "string" },
         },
+        {
+          name: "userId",
+          in: "path",
+          required: true,
+          schema: { type: "string" },
+        },
+      ],
+      responses: {
+        200: { description: "Member blocked successfully" },
+      },
+    },
+  },
+
+  "/api/groups/{groupId}/members/{userId}/unblock": {
+    patch: {
+      tags: ["Groups"],
+      summary: "Unblock group member",
+      security: bearer,
+      parameters: [
+        {
+          name: "groupId",
+          in: "path",
+          required: true,
+          schema: { type: "string" },
+        },
+        {
+          name: "userId",
+          in: "path",
+          required: true,
+          schema: { type: "string" },
+        },
+      ],
+      responses: {
+        200: { description: "Member unblocked successfully" },
+      },
+    },
+  },
+
+  "/api/groups/{groupId}/members/{userId}/admin": {
+    patch: {
+      tags: ["Groups"],
+      summary: "Make group admin",
+      security: bearer,
+      parameters: [
+        {
+          name: "groupId",
+          in: "path",
+          required: true,
+          schema: { type: "string" },
+        },
+        {
+          name: "userId",
+          in: "path",
+          required: true,
+          schema: { type: "string" },
+        },
+      ],
+      responses: {
+        200: { description: "Member promoted to admin" },
+      },
+    },
+  },
+
+  "/api/groups/{groupId}/members/{userId}/remove-admin": {
+    patch: {
+      tags: ["Groups"],
+      summary: "Remove group admin",
+      security: bearer,
+      parameters: [
+        {
+          name: "groupId",
+          in: "path",
+          required: true,
+          schema: { type: "string" },
+        },
+        {
+          name: "userId",
+          in: "path",
+          required: true,
+          schema: { type: "string" },
+        },
+      ],
+      responses: {
+        200: { description: "Admin role removed" },
+      },
+    },
+  },
+
+  "/api/groups/{groupId}/leave": {
+    post: {
+      tags: ["Groups"],
+      summary: "Leave group",
+      security: bearer,
+      parameters: [
+        {
+          name: "groupId",
+          in: "path",
+          required: true,
+          schema: { type: "string" },
+        },
+      ],
+      responses: {
+        200: { description: "Left group successfully" },
+      },
+    },
+  },
+
+  "/api/groups/{groupId}": {
+    patch: {
+      tags: ["Groups"],
+      summary: "Update group",
+      security: bearer,
+      parameters: [
+        {
+          name: "groupId",
+          in: "path",
+          required: true,
+          schema: { type: "string" },
+        },
+      ],
+      requestBody: {
+        required: false,
+        content: {
+          "multipart/form-data": {
+            schema: {
+              type: "object",
+              properties: {
+                name: { type: "string", example: "New Group Name" },
+                groupImage: { type: "string", format: "binary" },
+              },
+            },
+          },
+        },
+      },
+      responses: {
+        200: { description: "Group updated successfully" },
+        404: { description: "Group not found" },
       },
     },
   },

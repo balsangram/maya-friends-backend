@@ -4,46 +4,33 @@ import {
   recheckPayment as recheckPaymentService,
 } from "../services/payment.service.js";
 
-export const verifyPayment = async (
-  req,
-  res
-) => {
+export const verifyPayment = async (req, res) => {
   try {
     const userId = req.user.id;
-console.log("User ID:------", userId);
-console.log("Verify payment request body:", req.body);
+
+    console.log("User ID:", userId);
+    console.log("Verify payment request body:", req.body);
+
     const {
-      amount,
-      razorpayOrderId,
-      razorpayPaymentId,
-      razorpaySignature,
+      razorpay_order_id,
+      razorpay_payment_id,
+      razorpay_signature,
     } = req.body;
 
-
-    const payment =
-      await verifyPaymentService({
-        userId,
-        amount,
-        razorpayOrderId,
-        razorpayPaymentId,
-        razorpaySignature,
-      });
-
+    const payment = await verifyPaymentService({
+      userId,
+      razorpayOrderId: razorpay_order_id,
+      razorpayPaymentId: razorpay_payment_id,
+      razorpaySignature: razorpay_signature,
+    });
 
     return res.status(200).json({
       success: true,
-
-      message:
-        "Payment verified successfully",
-
+      message: "Payment verified successfully",
       data: payment,
     });
   } catch (error) {
-    console.error(
-      "Verify payment error:",
-      error
-    );
-
+    console.error("Verify payment error:", error);
 
     return res.status(400).json({
       success: false,

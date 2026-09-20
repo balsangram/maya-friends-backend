@@ -1,4 +1,4 @@
-import swaggerJsdoc from "swagger-jsdoc";
+import dotenv from "dotenv";
 
 // =========================
 // Auth Swagger
@@ -23,103 +23,76 @@ import messageSwagger from "../docs/chat/message.swagger.js";
 // =========================
 import postSwagger from "../docs/post/post.swagger.js";
 
-const options = {
-  definition: {
-    openapi: "3.0.0",
+dotenv.config();
 
-    info: {
-      title: "Maya Friends API Gateway",
-      version: "1.0.0",
-      description: "Maya Friends API Gateway Documentation",
+const PORT = process.env.PORT || 7000;
+const GATEWAY_URL =
+  process.env.GATEWAY_URL || `http://localhost:${PORT}`;
+
+/**
+ * Manual OpenAPI 3.0 spec.
+ * Doc modules already export path objects — do not use swagger-jsdoc
+ * (that expects JSDoc comments and can drop / empty paths).
+ */
+const swaggerSpec = {
+  openapi: "3.0.0",
+
+  info: {
+    title: "Maya Friends API Gateway",
+    version: "1.0.0",
+    description:
+      "Unified API documentation for Auth, Chat, and Post services via the API Gateway.",
+  },
+
+  servers: [
+    {
+      url: GATEWAY_URL,
+      description: "API Gateway",
     },
+  ],
 
-    servers: [
-      {
-        url: "http://192.168.0.107:7000",
-        description: "API Gateway",
-      },
-    ],
+  tags: [
+    { name: "Auth", description: "Authentication APIs" },
+    { name: "Admin", description: "Admin APIs" },
+    { name: "Users", description: "User APIs" },
+    { name: "Payments", description: "Payment APIs" },
+    { name: "Plans", description: "Plan APIs" },
+    { name: "Subscriptions", description: "Subscription APIs" },
+    { name: "Chat", description: "Chat APIs" },
+    { name: "Messages", description: "Message APIs" },
+    { name: "Friends", description: "Friend APIs" },
+    { name: "Groups", description: "Group APIs" },
+    { name: "Post", description: "Post APIs" },
+  ],
 
-    tags: [
-      {
-        name: "Auth",
-        description: "Authentication APIs",
+  components: {
+    securitySchemes: {
+      bearerAuth: {
+        type: "http",
+        scheme: "bearer",
+        bearerFormat: "JWT",
       },
-      {
-        name: "Admin",
-        description: "Admin APIs",
-      },
-      {
-        name: "Users",
-        description: "User APIs",
-      },
-      {
-        name: "Payments",
-        description: "Payment APIs",
-      },
-      {
-        name: "Plans",
-        description: "Plan APIs",
-      },
-      {
-        name: "Subscriptions",
-        description: "Subscription APIs",
-      },
-      {
-        name: "Chat",
-        description: "Chat APIs",
-      },
-      {
-        name: "Messages",
-        description: "Message APIs",
-      },
-      {
-        name: "Friends",
-        description: "Friend APIs",
-      },
-      {
-        name: "Groups",
-        description: "Group APIs",
-      },
-      {
-        name: "Post",
-        description: "Post APIs",
-      },
-    ],
-
-    components: {
-      securitySchemes: {
-        bearerAuth: {
-          type: "http",
-          scheme: "bearer",
-          bearerFormat: "JWT",
-        },
-      },
-    },
-
-    paths: {
-      // Auth
-      ...authSwagger,
-      ...adminSwagger,
-      ...userSwagger,
-      ...paymentsSwagger,
-      ...planSwagger,
-      ...subscriptionsSwagger,
-
-      // Chat
-      ...chatSwagger,
-      ...friendSwagger,
-      ...groupSwagger,
-      ...messageSwagger,
-
-      // Post
-      ...postSwagger,
     },
   },
 
-  apis: [],
-};
+  paths: {
+    // Auth
+    ...authSwagger,
+    ...adminSwagger,
+    ...userSwagger,
+    ...paymentsSwagger,
+    ...planSwagger,
+    ...subscriptionsSwagger,
 
-const swaggerSpec = swaggerJsdoc(options);
+    // Chat
+    ...chatSwagger,
+    ...friendSwagger,
+    ...groupSwagger,
+    ...messageSwagger,
+
+    // Post
+    ...postSwagger,
+  },
+};
 
 export default swaggerSpec;

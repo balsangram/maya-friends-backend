@@ -1,33 +1,13 @@
-const subscriptionsSwagger = {
-  "/subscriptions": {
-    get: {
-      tags: ["Subscriptions"],
-      summary: "Get current user subscription",
-      security: [
-        {
-          bearerAuth: [],
-        },
-      ],
-      responses: {
-        200: {
-          description: "Subscription retrieved successfully",
-        },
-        401: {
-          description: "Unauthorized",
-        },
-      },
-    },
-  },
+const bearer = [{ bearerAuth: [] }];
 
-  "/subscriptions/subscribe": {
+const subscriptionsSwagger = {
+  "/api/subscriptions/v1/subscribe": {
     post: {
       tags: ["Subscriptions"],
       summary: "Subscribe to a plan",
-      security: [
-        {
-          bearerAuth: [],
-        },
-      ],
+      description:
+        "Creates a Razorpay order for the selected plan. Use the returned order with Razorpay checkout, then call payment verify.",
+      security: bearer,
       requestBody: {
         required: true,
         content: {
@@ -38,7 +18,7 @@ const subscriptionsSwagger = {
               properties: {
                 planId: {
                   type: "string",
-                  example: "66c123456789",
+                  example: "6a81d9a9e81f24b64a8aea0e",
                 },
               },
             },
@@ -46,32 +26,42 @@ const subscriptionsSwagger = {
         },
       },
       responses: {
-        200: {
-          description: "Subscription created successfully",
-        },
-        400: {
-          description: "Invalid subscription request",
-        },
+        200: { description: "Razorpay order created successfully" },
+        400: { description: "Bad request" },
+        401: { description: "Unauthorized" },
+        404: { description: "Plan not found" },
       },
     },
   },
 
-  "/subscriptions/cancel": {
-    post: {
+  "/api/subscriptions/v1/cancel": {
+    patch: {
       tags: ["Subscriptions"],
       summary: "Cancel subscription",
-      security: [
-        {
-          bearerAuth: [],
-        },
-      ],
+      description:
+        "Schedules the active subscription for cancellation at period end.",
+      security: bearer,
       responses: {
-        200: {
-          description: "Subscription cancelled successfully",
-        },
-        404: {
-          description: "Subscription not found",
-        },
+        200: { description: "Subscription cancelled successfully" },
+        400: { description: "Subscription is not active" },
+        401: { description: "Unauthorized" },
+        404: { description: "Subscription not found" },
+      },
+    },
+  },
+
+  "/api/subscriptions/v1/resubscribe": {
+    patch: {
+      tags: ["Subscriptions"],
+      summary: "Resubscribe to cancelled plan",
+      description:
+        "Creates a Razorpay order to reactivate a cancelled subscription.",
+      security: bearer,
+      responses: {
+        200: { description: "Razorpay order created successfully" },
+        400: { description: "Cannot resubscribe" },
+        401: { description: "Unauthorized" },
+        404: { description: "Subscription not found" },
       },
     },
   },

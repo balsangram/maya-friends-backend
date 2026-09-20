@@ -1,5 +1,6 @@
 import crypto from "crypto";
 
+import razorpay from "../utils/razorpay.js";
 import {
   findPaymentByProviderPaymentId,
   createPayment,
@@ -9,13 +10,24 @@ import {
   updateSubscription,
 } from "../repositories/payment.repository.js";
 
+
 export const verifyPayment = async ({
   userId,
-  amount,
   razorpayOrderId,
   razorpayPaymentId,
   razorpaySignature,
 }) => {
+  // 1. Validate Razorpay details
+  console.log("Verifying payment for user:", userId);
+  console.log(
+    "Razorpay Order ID:", razorpayOrderId
+  );
+  console.log(
+    "Razorpay Payment ID:", razorpayPaymentId
+  );
+  console.log(
+    "Razorpay Signature:", razorpaySignature
+  );
   if (
     !razorpayOrderId ||
     !razorpayPaymentId ||
@@ -26,65 +38,55 @@ export const verifyPayment = async ({
     );
   }
 
+  // 2. Create signature string
+  const body = `${razorpayOrderId}|${razorpayPaymentId}`;
 
-  // Create signature string
-  const body =
-    `${razorpayOrderId}|${razorpayPaymentId}`;
+  // 3. Generate expected signature
+  const expectedSignature = crypto
+    .createHmac(
+      "sha256",
+      process.env.RAZORPAY_KEY_SECRET
+    )
+    .update(body)
+    .digest("hex");
 
-
-  // Generate signature using Razorpay secret
-  const expectedSignature =
-    crypto
-      .createHmac(
-        "sha256",
-        process.env.RAZORPAY_KEY_SECRET
-      )
-      .update(body)
-      .digest("hex");
-
-
-  // Compare signatures
-  if (
-    expectedSignature !==
-    razorpaySignature
-  ) {
+  // 4. Verify signature
+  if (expectedSignature !== razorpaySignature) {
     throw new Error(
       "Invalid Razorpay payment signature"
     );
   }
 
-
-  // Prevent duplicate payment
+  // 5. Prevent duplicate payment
   const existingPayment =
     await findPaymentByProviderPaymentId(
       razorpayPaymentId
     );
 
-
   if (existingPayment) {
     return existingPayment;
   }
 
+  // 6. Fetch payment from Razorpay to get amount (paise → rupees)
+  const razorpayPayment =
+    await razorpay.payments.fetch(razorpayPaymentId);
 
-  // Save payment
+  if (!razorpayPayment?.amount) {
+    throw new Error(
+      "Unable to fetch payment amount from Razorpay"
+    );
+  }
+
+  const amount = razorpayPayment.amount / 100;
+
+  // 7. Save payment
   const payment = await createPayment({
     userId,
-
     amount,
-
     status: "completed",
-
     provider: "razorpay",
-
-    providerPaymentId:
-      razorpayPaymentId,
-
-    providerOrderId:
-      razorpayOrderId,
-
-    paidAt: new Date(),
+    providerPaymentId: razorpayPaymentId,
   });
-
 
   return payment;
 };

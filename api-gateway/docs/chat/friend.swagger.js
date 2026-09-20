@@ -1,145 +1,176 @@
+const bearer = [{ bearerAuth: [] }];
+
 const friendSwagger = {
-  "/friends": {
+  "/api/friends/v1": {
     get: {
       tags: ["Friends"],
-      summary: "Get friends",
-      security: [{ bearerAuth: [] }],
-
+      summary: "List friends or blocked users",
+      description:
+        "Returns friends when `blockUser=false` (default). Returns only blocked users when `blockUser=true`.",
+      security: bearer,
+      parameters: [
+        {
+          name: "blockUser",
+          in: "query",
+          required: false,
+          schema: {
+            type: "string",
+            enum: ["true", "false"],
+            default: "false",
+          },
+          description: "Set true to list blocked users only",
+        },
+        {
+          name: "search",
+          in: "query",
+          required: false,
+          schema: { type: "string" },
+          description: "Search by username or name",
+        },
+        {
+          name: "page",
+          in: "query",
+          required: false,
+          schema: { type: "integer", default: 1 },
+        },
+        {
+          name: "limit",
+          in: "query",
+          required: false,
+          schema: { type: "integer", default: 10 },
+        },
+      ],
       responses: {
         200: {
-          description: "Friends retrieved successfully",
+          description: "Friends / blocked users fetched successfully",
+          content: {
+            "application/json": {
+              schema: {
+                type: "object",
+                properties: {
+                  success: { type: "boolean", example: true },
+                  message: { type: "string" },
+                  data: {
+                    type: "array",
+                    items: {
+                      type: "object",
+                      properties: {
+                        userId: { type: "string" },
+                        username: { type: "string" },
+                        name: { type: "string", nullable: true },
+                        image: { type: "string", nullable: true },
+                        type: {
+                          type: "string",
+                          enum: ["friend", "best_friend", "close_friend"],
+                        },
+                      },
+                    },
+                  },
+                  pagination: { type: "object" },
+                },
+              },
+            },
+          },
         },
-        401: {
-          description: "Unauthorized",
-        },
+        401: { description: "Unauthorized" },
       },
     },
+  },
 
+  "/api/friends/v1/add": {
     post: {
       tags: ["Friends"],
-      summary: "Send friend request",
-      security: [{ bearerAuth: [] }],
-
+      summary: "Add friend",
+      security: bearer,
       requestBody: {
         required: true,
         content: {
           "application/json": {
             schema: {
               type: "object",
-              required: ["userId"],
+              required: ["friendId"],
               properties: {
-                userId: {
+                friendId: {
                   type: "string",
-                  example: "66c123456789",
+                  example: "6a8349fe7a9ab2797ec0badf",
                 },
               },
             },
           },
         },
       },
-
       responses: {
-        201: {
-          description: "Friend request sent successfully",
-        },
-        400: {
-          description: "Invalid request",
-        },
+        200: { description: "Friend added successfully" },
+        400: { description: "Bad request" },
+        404: { description: "Friend user not found" },
       },
     },
   },
 
-  "/friends/requests": {
-    get: {
-      tags: ["Friends"],
-      summary: "Get pending friend requests",
-      security: [{ bearerAuth: [] }],
-
-      responses: {
-        200: {
-          description: "Friend requests retrieved successfully",
-        },
-      },
-    },
-  },
-
-  "/friends/{userId}/accept": {
-    put: {
-      tags: ["Friends"],
-      summary: "Accept friend request",
-      security: [{ bearerAuth: [] }],
-
-      parameters: [
-        {
-          name: "userId",
-          in: "path",
-          required: true,
-          schema: {
-            type: "string",
-          },
-        },
-      ],
-
-      responses: {
-        200: {
-          description: "Friend request accepted successfully",
-        },
-        404: {
-          description: "Friend request not found",
-        },
-      },
-    },
-  },
-
-  "/friends/{userId}/reject": {
-    put: {
-      tags: ["Friends"],
-      summary: "Reject friend request",
-      security: [{ bearerAuth: [] }],
-
-      parameters: [
-        {
-          name: "userId",
-          in: "path",
-          required: true,
-          schema: {
-            type: "string",
-          },
-        },
-      ],
-
-      responses: {
-        200: {
-          description: "Friend request rejected successfully",
-        },
-      },
-    },
-  },
-
-  "/friends/{userId}": {
-    delete: {
+  "/api/friends/v1/unfriend": {
+    post: {
       tags: ["Friends"],
       summary: "Remove friend",
-      security: [{ bearerAuth: [] }],
-
-      parameters: [
-        {
-          name: "userId",
-          in: "path",
-          required: true,
-          schema: {
-            type: "string",
+      security: bearer,
+      requestBody: {
+        required: true,
+        content: {
+          "application/json": {
+            schema: {
+              type: "object",
+              required: ["friendId"],
+              properties: {
+                friendId: {
+                  type: "string",
+                  example: "6a8349fe7a9ab2797ec0badf",
+                },
+              },
+            },
           },
         },
-      ],
-
+      },
       responses: {
-        200: {
-          description: "Friend removed successfully",
+        200: { description: "Friend removed successfully" },
+        404: { description: "Friend record not found" },
+      },
+    },
+  },
+
+  "/api/friends/v1/block/{friendId}": {
+    patch: {
+      tags: ["Friends"],
+      summary: "Block or unblock a user",
+      security: bearer,
+      parameters: [
+        {
+          name: "friendId",
+          in: "path",
+          required: true,
+          schema: { type: "string" },
         },
-        404: {
-          description: "Friend not found",
+      ],
+      requestBody: {
+        required: true,
+        content: {
+          "application/json": {
+            schema: {
+              type: "object",
+              required: ["action"],
+              properties: {
+                action: {
+                  type: "string",
+                  enum: ["block", "unblock"],
+                  example: "block",
+                },
+              },
+            },
+          },
         },
+      },
+      responses: {
+        200: { description: "Block/unblock successful" },
+        400: { description: "Invalid action" },
+        404: { description: "User not found" },
       },
     },
   },

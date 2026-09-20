@@ -26,7 +26,18 @@ console.log(
 app.use(
   "/api-docs",
   swaggerUi.serve,
-  swaggerUi.setup(swaggerSpec)
+  swaggerUi.setup(swaggerSpec, {
+    explorer: true,
+    customSiteTitle: "Maya Friends API Docs",
+    swaggerOptions: {
+      persistAuthorization: true,
+      displayRequestDuration: true,
+      docExpansion: "none",
+      filter: true,
+      tagsSorter: "alpha",
+      operationsSorter: "alpha",
+    },
+  })
 );
 
 
@@ -69,6 +80,7 @@ app.use(
 app.use(
   [
     "/api/chat",
+    "/api/chats",
     "/api/friends",
     "/api/messages",
     "/api/groups",
