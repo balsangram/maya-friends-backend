@@ -8,6 +8,7 @@ import {
   cancelPlan,
   resubscribePlan,
 } from "../controllers/subscription.controller.js";
+import { verifyPayment } from "../services/payment.service.js";
 
 const router = express.Router();
 
@@ -17,6 +18,12 @@ router.post(
   authMiddleware,
   authorize("User"),
   subscribePlan
+);
+router.post(
+  "/v1/verify-payment",
+  authMiddleware,
+  authorize("User"),
+  verifyPayment
 );
 
 // Cancel subscription

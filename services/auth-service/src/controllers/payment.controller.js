@@ -9,9 +9,9 @@ export const verifyPayment = async (
   res
 ) => {
   try {
-    const userId = req.user._id;
-
-
+    const userId = req.user.id;
+console.log("User ID:------", userId);
+console.log("Verify payment request body:", req.body);
     const {
       amount,
       razorpayOrderId,
