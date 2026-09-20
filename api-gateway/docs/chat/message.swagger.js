@@ -1,17 +1,22 @@
 const bearer = [{ bearerAuth: [] }];
 
+const objectId = {
+  type: "string",
+  example: "6a8349fe7a9ab2797ec0badf",
+};
+
 const messageSwagger = {
   "/api/messages/chat/{chatId}": {
     get: {
       tags: ["Messages"],
-      summary: "Get chat messages",
+      summary: "Get messages for a chat",
       security: bearer,
       parameters: [
         {
           name: "chatId",
           in: "path",
           required: true,
-          schema: { type: "string" },
+          schema: objectId,
         },
         {
           name: "page",
@@ -34,7 +39,9 @@ const messageSwagger = {
   "/api/messages": {
     post: {
       tags: ["Messages"],
-      summary: "Send message",
+      summary: "Send text or media message",
+      description:
+        "Use multipart/form-data when attaching a file. For text-only, JSON is fine.",
       security: bearer,
       requestBody: {
         required: true,
@@ -44,9 +51,25 @@ const messageSwagger = {
               type: "object",
               required: ["chatId"],
               properties: {
-                chatId: { type: "string" },
-                text: { type: "string", example: "Hello!" },
-                file: { type: "string", format: "binary" },
+                chatId: objectId,
+                messageType: {
+                  type: "string",
+                  example: "text",
+                  description: "e.g. text, image, video, audio, file",
+                },
+                message: {
+                  type: "string",
+                  example: "Hello!",
+                },
+                replyTo: {
+                  type: "string",
+                  description: "Optional message ID being replied to",
+                  example: "6aa32159172088d9d4ed5cdb",
+                },
+                file: {
+                  type: "string",
+                  format: "binary",
+                },
               },
             },
           },
@@ -55,16 +78,28 @@ const messageSwagger = {
               type: "object",
               required: ["chatId"],
               properties: {
-                chatId: { type: "string" },
-                text: { type: "string", example: "Hello!" },
+                chatId: objectId,
+                messageType: {
+                  type: "string",
+                  example: "text",
+                },
+                message: {
+                  type: "string",
+                  example: "Hello!",
+                },
+                replyTo: {
+                  type: "string",
+                  nullable: true,
+                },
               },
             },
           },
         },
       },
       responses: {
-        200: { description: "Message sent successfully" },
+        201: { description: "Message sent successfully" },
         400: { description: "Bad request" },
+        401: { description: "Unauthorized" },
       },
     },
   },
@@ -79,7 +114,7 @@ const messageSwagger = {
           name: "messageId",
           in: "path",
           required: true,
-          schema: { type: "string" },
+          schema: objectId,
         },
       ],
       requestBody: {
@@ -88,9 +123,12 @@ const messageSwagger = {
           "application/json": {
             schema: {
               type: "object",
-              required: ["text"],
+              required: ["message"],
               properties: {
-                text: { type: "string", example: "Updated text" },
+                message: {
+                  type: "string",
+                  example: "Updated text",
+                },
               },
             },
           },
@@ -98,6 +136,7 @@ const messageSwagger = {
       },
       responses: {
         200: { description: "Message updated successfully" },
+        401: { description: "Unauthorized" },
         404: { description: "Message not found" },
       },
     },
@@ -110,11 +149,12 @@ const messageSwagger = {
           name: "messageId",
           in: "path",
           required: true,
-          schema: { type: "string" },
+          schema: objectId,
         },
       ],
       responses: {
         200: { description: "Message deleted successfully" },
+        401: { description: "Unauthorized" },
         404: { description: "Message not found" },
       },
     },
@@ -123,14 +163,14 @@ const messageSwagger = {
   "/api/messages/{messageId}/forward": {
     post: {
       tags: ["Messages"],
-      summary: "Forward message",
+      summary: "Forward message to one or more chats",
       security: bearer,
       parameters: [
         {
           name: "messageId",
           in: "path",
           required: true,
-          schema: { type: "string" },
+          schema: objectId,
         },
       ],
       requestBody: {
@@ -139,11 +179,13 @@ const messageSwagger = {
           "application/json": {
             schema: {
               type: "object",
-              required: ["chatId"],
+              required: ["chatIds"],
               properties: {
-                chatId: {
-                  type: "string",
-                  description: "Target chat ID",
+                chatIds: {
+                  type: "array",
+                  items: objectId,
+                  example: ["6a8349fe7a9ab2797ec0badf"],
+                  description: "Target chat IDs",
                 },
               },
             },
@@ -151,7 +193,8 @@ const messageSwagger = {
         },
       },
       responses: {
-        200: { description: "Message forwarded successfully" },
+        201: { description: "Message forwarded successfully" },
+        401: { description: "Unauthorized" },
         404: { description: "Message not found" },
       },
     },
@@ -167,11 +210,12 @@ const messageSwagger = {
           name: "messageId",
           in: "path",
           required: true,
-          schema: { type: "string" },
+          schema: objectId,
         },
       ],
       responses: {
         200: { description: "Message marked as read" },
+        401: { description: "Unauthorized" },
         404: { description: "Message not found" },
       },
     },

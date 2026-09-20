@@ -1,19 +1,25 @@
 const bearer = [{ bearerAuth: [] }];
 
+const objectId = {
+  type: "string",
+  example: "6a8349fe7a9ab2797ec0badf",
+};
+
+const pathParams = (names) =>
+  names.map((name) => ({
+    name,
+    in: "path",
+    required: true,
+    schema: objectId,
+  }));
+
 const groupSwagger = {
   "/api/groups/{groupId}/members": {
     get: {
       tags: ["Groups"],
       summary: "Get group members",
       security: bearer,
-      parameters: [
-        {
-          name: "groupId",
-          in: "path",
-          required: true,
-          schema: { type: "string" },
-        },
-      ],
+      parameters: pathParams(["groupId"]),
       responses: {
         200: { description: "Group members fetched successfully" },
         401: { description: "Unauthorized" },
@@ -23,14 +29,7 @@ const groupSwagger = {
       tags: ["Groups"],
       summary: "Add group member",
       security: bearer,
-      parameters: [
-        {
-          name: "groupId",
-          in: "path",
-          required: true,
-          schema: { type: "string" },
-        },
-      ],
+      parameters: pathParams(["groupId"]),
       requestBody: {
         required: true,
         content: {
@@ -39,15 +38,19 @@ const groupSwagger = {
               type: "object",
               required: ["userId"],
               properties: {
-                userId: { type: "string" },
+                userId: {
+                  ...objectId,
+                  description: "User ID to add to the group",
+                },
               },
             },
           },
         },
       },
       responses: {
-        200: { description: "Member added successfully" },
+        201: { description: "Member added successfully" },
         400: { description: "Bad request" },
+        401: { description: "Unauthorized" },
       },
     },
   },
@@ -57,22 +60,10 @@ const groupSwagger = {
       tags: ["Groups"],
       summary: "Remove group member",
       security: bearer,
-      parameters: [
-        {
-          name: "groupId",
-          in: "path",
-          required: true,
-          schema: { type: "string" },
-        },
-        {
-          name: "userId",
-          in: "path",
-          required: true,
-          schema: { type: "string" },
-        },
-      ],
+      parameters: pathParams(["groupId", "userId"]),
       responses: {
         200: { description: "Member removed successfully" },
+        401: { description: "Unauthorized" },
         404: { description: "Member not found" },
       },
     },
@@ -83,22 +74,10 @@ const groupSwagger = {
       tags: ["Groups"],
       summary: "Block group member",
       security: bearer,
-      parameters: [
-        {
-          name: "groupId",
-          in: "path",
-          required: true,
-          schema: { type: "string" },
-        },
-        {
-          name: "userId",
-          in: "path",
-          required: true,
-          schema: { type: "string" },
-        },
-      ],
+      parameters: pathParams(["groupId", "userId"]),
       responses: {
         200: { description: "Member blocked successfully" },
+        401: { description: "Unauthorized" },
       },
     },
   },
@@ -108,22 +87,10 @@ const groupSwagger = {
       tags: ["Groups"],
       summary: "Unblock group member",
       security: bearer,
-      parameters: [
-        {
-          name: "groupId",
-          in: "path",
-          required: true,
-          schema: { type: "string" },
-        },
-        {
-          name: "userId",
-          in: "path",
-          required: true,
-          schema: { type: "string" },
-        },
-      ],
+      parameters: pathParams(["groupId", "userId"]),
       responses: {
         200: { description: "Member unblocked successfully" },
+        401: { description: "Unauthorized" },
       },
     },
   },
@@ -131,24 +98,12 @@ const groupSwagger = {
   "/api/groups/{groupId}/members/{userId}/admin": {
     patch: {
       tags: ["Groups"],
-      summary: "Make group admin",
+      summary: "Make member a group admin",
       security: bearer,
-      parameters: [
-        {
-          name: "groupId",
-          in: "path",
-          required: true,
-          schema: { type: "string" },
-        },
-        {
-          name: "userId",
-          in: "path",
-          required: true,
-          schema: { type: "string" },
-        },
-      ],
+      parameters: pathParams(["groupId", "userId"]),
       responses: {
-        200: { description: "Member promoted to admin" },
+        200: { description: "Member is now an admin" },
+        401: { description: "Unauthorized" },
       },
     },
   },
@@ -156,24 +111,12 @@ const groupSwagger = {
   "/api/groups/{groupId}/members/{userId}/remove-admin": {
     patch: {
       tags: ["Groups"],
-      summary: "Remove group admin",
+      summary: "Remove admin permission",
       security: bearer,
-      parameters: [
-        {
-          name: "groupId",
-          in: "path",
-          required: true,
-          schema: { type: "string" },
-        },
-        {
-          name: "userId",
-          in: "path",
-          required: true,
-          schema: { type: "string" },
-        },
-      ],
+      parameters: pathParams(["groupId", "userId"]),
       responses: {
-        200: { description: "Admin role removed" },
+        200: { description: "Admin permission removed" },
+        401: { description: "Unauthorized" },
       },
     },
   },
@@ -183,16 +126,10 @@ const groupSwagger = {
       tags: ["Groups"],
       summary: "Leave group",
       security: bearer,
-      parameters: [
-        {
-          name: "groupId",
-          in: "path",
-          required: true,
-          schema: { type: "string" },
-        },
-      ],
+      parameters: pathParams(["groupId"]),
       responses: {
-        200: { description: "Left group successfully" },
+        200: { description: "You left the group successfully" },
+        401: { description: "Unauthorized" },
       },
     },
   },
@@ -200,16 +137,9 @@ const groupSwagger = {
   "/api/groups/{groupId}": {
     patch: {
       tags: ["Groups"],
-      summary: "Update group",
+      summary: "Update group name / image",
       security: bearer,
-      parameters: [
-        {
-          name: "groupId",
-          in: "path",
-          required: true,
-          schema: { type: "string" },
-        },
-      ],
+      parameters: pathParams(["groupId"]),
       requestBody: {
         required: false,
         content: {
@@ -217,8 +147,29 @@ const groupSwagger = {
             schema: {
               type: "object",
               properties: {
-                name: { type: "string", example: "New Group Name" },
-                groupImage: { type: "string", format: "binary" },
+                groupName: {
+                  type: "string",
+                  example: "New Group Name",
+                },
+                groupImage: {
+                  type: "string",
+                  format: "binary",
+                },
+              },
+            },
+          },
+          "application/json": {
+            schema: {
+              type: "object",
+              properties: {
+                groupName: {
+                  type: "string",
+                  example: "New Group Name",
+                },
+                groupImage: {
+                  type: "string",
+                  example: "https://example.com/group.jpg",
+                },
               },
             },
           },
@@ -226,6 +177,7 @@ const groupSwagger = {
       },
       responses: {
         200: { description: "Group updated successfully" },
+        401: { description: "Unauthorized" },
         404: { description: "Group not found" },
       },
     },

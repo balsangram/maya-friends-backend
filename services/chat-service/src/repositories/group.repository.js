@@ -32,13 +32,10 @@ export const findGroupMembersRepository =
     return await GroupMember.find({
       chatId: groupId,
     })
-      .populate(
-        "userId",
-        "name email profileImage"
-      )
       .sort({
         createdAt: 1,
-      });
+      })
+      .lean();
   };
 
 
@@ -133,13 +130,5 @@ export const updateGroupRepository =
         new: true,
         runValidators: true,
       }
-    )
-      .populate(
-        "groupAdmins",
-        "name email profileImage"
-      )
-      .populate(
-        "createdBy",
-        "name email profileImage"
-      );
+    ).lean();
   };

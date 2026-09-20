@@ -1,48 +1,48 @@
 const bearer = [{ bearerAuth: [] }];
 
+const objectId = {
+  type: "string",
+  example: "6a8349fe7a9ab2797ec0badf",
+};
+
 const friendSwagger = {
   "/api/friends/v1": {
     get: {
       tags: ["Friends"],
       summary: "List friends or blocked users",
       description:
-        "Returns friends when `blockUser=false` (default). Returns only blocked users when `blockUser=true`.",
+        "`blockUser=false` (default) → friends only. `blockUser=true` → blocked users only.",
       security: bearer,
       parameters: [
         {
           name: "blockUser",
           in: "query",
-          required: false,
           schema: {
             type: "string",
             enum: ["true", "false"],
             default: "false",
           },
-          description: "Set true to list blocked users only",
         },
         {
           name: "search",
           in: "query",
-          required: false,
           schema: { type: "string" },
           description: "Search by username or name",
         },
         {
           name: "page",
           in: "query",
-          required: false,
           schema: { type: "integer", default: 1 },
         },
         {
           name: "limit",
           in: "query",
-          required: false,
           schema: { type: "integer", default: 10 },
         },
       ],
       responses: {
         200: {
-          description: "Friends / blocked users fetched successfully",
+          description: "List fetched successfully",
           content: {
             "application/json": {
               schema: {
@@ -55,8 +55,8 @@ const friendSwagger = {
                     items: {
                       type: "object",
                       properties: {
-                        userId: { type: "string" },
-                        username: { type: "string" },
+                        userId: objectId,
+                        username: { type: "string", example: "anshuman" },
                         name: { type: "string", nullable: true },
                         image: { type: "string", nullable: true },
                         type: {
@@ -66,7 +66,17 @@ const friendSwagger = {
                       },
                     },
                   },
-                  pagination: { type: "object" },
+                  pagination: {
+                    type: "object",
+                    properties: {
+                      currentPage: { type: "integer" },
+                      limit: { type: "integer" },
+                      totalItems: { type: "integer" },
+                      totalPages: { type: "integer" },
+                      hasNextPage: { type: "boolean" },
+                      hasPreviousPage: { type: "boolean" },
+                    },
+                  },
                 },
               },
             },
@@ -90,10 +100,7 @@ const friendSwagger = {
               type: "object",
               required: ["friendId"],
               properties: {
-                friendId: {
-                  type: "string",
-                  example: "6a8349fe7a9ab2797ec0badf",
-                },
+                friendId: objectId,
               },
             },
           },
@@ -102,6 +109,7 @@ const friendSwagger = {
       responses: {
         200: { description: "Friend added successfully" },
         400: { description: "Bad request" },
+        401: { description: "Unauthorized" },
         404: { description: "Friend user not found" },
       },
     },
@@ -120,10 +128,7 @@ const friendSwagger = {
               type: "object",
               required: ["friendId"],
               properties: {
-                friendId: {
-                  type: "string",
-                  example: "6a8349fe7a9ab2797ec0badf",
-                },
+                friendId: objectId,
               },
             },
           },
@@ -131,6 +136,7 @@ const friendSwagger = {
       },
       responses: {
         200: { description: "Friend removed successfully" },
+        401: { description: "Unauthorized" },
         404: { description: "Friend record not found" },
       },
     },
@@ -146,7 +152,7 @@ const friendSwagger = {
           name: "friendId",
           in: "path",
           required: true,
-          schema: { type: "string" },
+          schema: objectId,
         },
       ],
       requestBody: {
@@ -168,8 +174,9 @@ const friendSwagger = {
         },
       },
       responses: {
-        200: { description: "Block/unblock successful" },
+        200: { description: "Block / unblock successful" },
         400: { description: "Invalid action" },
+        401: { description: "Unauthorized" },
         404: { description: "User not found" },
       },
     },

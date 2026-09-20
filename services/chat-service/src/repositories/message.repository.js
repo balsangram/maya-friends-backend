@@ -6,20 +6,11 @@ export const createMessageRepository = async (data) => {
 };
 
 // Find message
-export const findMessageByIdRepository = async (
-  messageId
-) => {
+export const findMessageByIdRepository = async (messageId) => {
   return await Message.findById(messageId)
-    .populate(
-      "senderId",
-      "name email profileImage"
-    )
-    .populate(
-      "replyTo"
-    )
-    .populate(
-      "forwardedFrom"
-    );
+    .populate("replyTo")
+    .populate("forwardedFrom")
+    .lean();
 };
 
 // Get messages
@@ -34,16 +25,11 @@ export const getChatMessagesRepository = async (
     chatId,
     isDeleted: false,
   })
-    .populate(
-      "senderId",
-      "name email profileImage"
-    )
     .populate("replyTo")
-    .sort({
-      createdAt: -1,
-    })
+    .sort({ createdAt: -1 })
     .skip(skip)
-    .limit(limit);
+    .limit(limit)
+    .lean();
 
   return messages.reverse();
 };
@@ -55,26 +41,15 @@ export const updateMessageRepository = async (
 ) => {
   return await Message.findByIdAndUpdate(
     messageId,
-    {
-      $set: updateData,
-    },
-    {
-      new: true,
-    }
+    { $set: updateData },
+    { new: true }
   )
-    .populate(
-      "senderId",
-      "name email profileImage"
-    )
-    .populate(
-      "replyTo"
-    );
+    .populate("replyTo")
+    .lean();
 };
 
 // Soft delete
-export const softDeleteMessageRepository = async (
-  messageId
-) => {
+export const softDeleteMessageRepository = async (messageId) => {
   return await Message.findByIdAndUpdate(
     messageId,
     {
@@ -85,10 +60,8 @@ export const softDeleteMessageRepository = async (
         media: null,
       },
     },
-    {
-      new: true,
-    }
-  );
+    { new: true }
+  ).lean();
 };
 
 // Mark read
@@ -103,15 +76,11 @@ export const markMessageReadRepository = async (
         readBy: userId,
       },
     },
-    {
-      new: true,
-    }
-  );
+    { new: true }
+  ).lean();
 };
 
 // Bulk create
-export const createManyMessagesRepository = async (
-  messages
-) => {
+export const createManyMessagesRepository = async (messages) => {
   return await Message.insertMany(messages);
 };

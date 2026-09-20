@@ -31,18 +31,8 @@ router.delete("/v1/profile",
 
 router.get("/v1/global-users", authMiddleware, authorize("User"), displayAllGlobalUsers);
 
-router.get(
-  "/v1/internal/:userId",
-  authMiddleware,
-  authorize("User"),
-  getUserById
-);
-
-router.post(
-  "/v1/internal/by-ids",
-  authMiddleware,
-  authorize("User"),
-  getUsersByIds
-);
+// Internal service-to-service endpoints (no user JWT)
+router.get("/v1/internal/:userId", getUserById);
+router.post("/v1/internal/by-ids", getUsersByIds);
 
 export default router;

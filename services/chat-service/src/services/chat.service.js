@@ -10,6 +10,7 @@ import {
   deactivateChatRepository,
 } from "../repositories/chat.repository.js";
 import { uploadToCloudinary } from "../utils/cloudinary.js";
+import { enrichChatsWithUsers } from "../utils/enrichUsers.js";
 import ApiError from "../utils/ApiError.js";
 
 
@@ -30,7 +31,6 @@ export const createPrivateChatService = async (
     throw ApiError.badRequest("You cannot create a chat with yourself");
   }
 
-  // Check whether chat already exists
   const existingChat =
     await findPrivateChatRepository(
       userId,
@@ -38,22 +38,16 @@ export const createPrivateChatService = async (
     );
 
   if (existingChat) {
-    return existingChat;
+    return enrichChatsWithUsers(existingChat);
   }
 
-  // Create private chat
   const chat = await createChatRepository({
     type: "private",
-
-    participants: [
-      userId,
-      friendId,
-    ],
-
+    participants: [userId, friendId],
     createdBy: userId,
   });
 
-  return chat;
+  return enrichChatsWithUsers(chat);
 };
 
 
@@ -169,12 +163,14 @@ export const createGroupChatService = async (paramsOrUserId, ...rest) => {
   });
 
   // Add creator as admin
-  await createGroupMembersRepository({
-    chatId: group._id,
-    userId,
-    role: "admin",
-    status: "active",
-  });
+  await createGroupMembersRepository([
+    {
+      chatId: group._id,
+      userId,
+      role: "admin",
+      status: "active",
+    },
+  ]);
 
   // Add other members
   if (filteredMemberIds.length > 0) {
@@ -192,7 +188,7 @@ export const createGroupChatService = async (paramsOrUserId, ...rest) => {
     );
   }
 
-  return group;
+  return enrichChatsWithUsers(group);
 };
 
 
@@ -203,7 +199,7 @@ export const getUserChatsService = async (
   const chats =
     await findUserChatsRepository(userId);
 
-  return chats;
+  return enrichChatsWithUsers(chats);
 };
 
 
@@ -223,7 +219,6 @@ export const getChatDetailsService = async (
     throw ApiError.notFound("Chat not found");
   }
 
-  // Check whether user belongs to chat
   const isParticipant =
     await isChatParticipantRepository(
       chatId,
@@ -236,7 +231,7 @@ export const getChatDetailsService = async (
     );
   }
 
-  return chat;
+  return enrichChatsWithUsers(chat);
 };
 
 
@@ -256,9 +251,12 @@ export const deleteChatService = async (
     throw ApiError.notFound("Chat not found");
   }
 
-  // Only creator can deactivate group
+  // Only creator can deactivate
+  const creatorId =
+    chat.createdBy?._id || chat.createdBy;
+
   if (
-    chat.createdBy.toString() !==
+    creatorId.toString() !==
     userId.toString()
   ) {
     throw ApiError.forbidden(

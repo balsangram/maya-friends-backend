@@ -11,6 +11,10 @@ import {
   removeGroupAdminRepository,
 } from "../repositories/group.repository.js";
 import { uploadToCloudinary, deleteFromCloudinary } from "../utils/cloudinary.js";
+import {
+  enrichChatsWithUsers,
+  enrichMembersWithUsers,
+} from "../utils/enrichUsers.js";
 import ApiError from "../utils/ApiError.js";
 
 
@@ -108,8 +112,10 @@ export const getGroupMembersService =
       );
     }
 
-    return await findGroupMembersRepository(
-      groupId
+    return enrichMembersWithUsers(
+      await findGroupMembersRepository(
+        groupId
+      )
     );
   };
 
@@ -660,5 +666,5 @@ export const updateGroupService =
       await deleteFromCloudinary(oldGroupImagePublicId);
     }
 
-    return updatedGroup;
+    return enrichChatsWithUsers(updatedGroup);
   };

@@ -16,6 +16,7 @@ import {
 } from "../repositories/chat.repository.js";
 import { getIO } from "../config/socket.js";
 import ApiError from "../utils/ApiError.js";
+import { enrichMessagesWithUsers } from "../utils/enrichUsers.js";
 
 
 // ============================================
@@ -193,14 +194,16 @@ export const sendMessageService = async (
     );
   }
 
+  const enriched = await enrichMessagesWithUsers(populated);
+
   // Notify chat users
   emitToChat(
     chatId,
     "new_message",
-    populated
+    enriched
   );
 
-  return populated;
+  return enriched;
 };
 
 
@@ -233,10 +236,12 @@ export const getChatMessagesService = async (
     limit = 20;
   }
 
-  return await getChatMessagesRepository(
-    chatId,
-    page,
-    limit
+  return enrichMessagesWithUsers(
+    await getChatMessagesRepository(
+      chatId,
+      page,
+      limit
+    )
   );
 };
 
@@ -309,7 +314,7 @@ export const editMessageService = async (
     updated
   );
 
-  return updated;
+  return enrichMessagesWithUsers(updated);
 };
 
 
@@ -457,14 +462,16 @@ export const forwardMessageService = async (
       );
 
     if (populated) {
+      const enriched = await enrichMessagesWithUsers(populated);
+
       forwardedMessages.push(
-        populated
+        enriched
       );
 
       emitToChat(
         chatId,
         "new_message",
-        populated
+        enriched
       );
     }
   }
