@@ -13,6 +13,24 @@ export const findGroupByIdRepository =
   };
 
 
+export const findActiveGroupMemberships = async (userId) => {
+  return GroupMember.find({
+    userId,
+    status: "active",
+  })
+    .select("chatId role joinedAt")
+    .lean();
+};
+
+export const findGroupsByIds = async (chatIds) => {
+  return Chat.find({
+    _id: { $in: chatIds },
+    type: "group",
+  })
+    .sort({ updatedAt: -1 })
+    .lean();
+};
+
 // Find one group member
 export const findGroupMemberRepository =
   async (

@@ -69,6 +69,39 @@ const authSchema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
+
+    // ==============================
+    // Subscription
+    // ==============================
+
+    subscription: {
+     
+      startDate: {
+        type: Date,
+        default: null,
+      },
+
+      endDate: {
+        type: Date,
+        default: null,
+      },
+
+      status: {
+        type: String,
+        enum: ["active", "expired", "cancelled"],
+        default: "expired",
+      },
+
+      paymentId: {
+        type: String,
+        default: null,
+      },
+
+      orderId: {
+        type: String,
+        default: null,
+      },
+    },
   },
   {
     timestamps: true,

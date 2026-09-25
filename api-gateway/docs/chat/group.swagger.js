@@ -14,7 +14,7 @@ const pathParams = (names) =>
   }));
 
 const groupSwagger = {
-  "/api/groups/{groupId}/members": {
+  "/api/groups/v1/{groupId}/members": {
     get: {
       tags: ["Groups"],
       summary: "Get group members",
@@ -55,7 +55,7 @@ const groupSwagger = {
     },
   },
 
-  "/api/groups/{groupId}/members/{userId}": {
+  "/api/groups/v1/{groupId}/members/{userId}": {
     delete: {
       tags: ["Groups"],
       summary: "Remove group member",
@@ -69,7 +69,7 @@ const groupSwagger = {
     },
   },
 
-  "/api/groups/{groupId}/members/{userId}/block": {
+  "/api/groups/v1/{groupId}/members/{userId}/block": {
     patch: {
       tags: ["Groups"],
       summary: "Block group member",
@@ -82,7 +82,7 @@ const groupSwagger = {
     },
   },
 
-  "/api/groups/{groupId}/members/{userId}/unblock": {
+  "/api/groups/v1/{groupId}/members/{userId}/unblock": {
     patch: {
       tags: ["Groups"],
       summary: "Unblock group member",
@@ -95,7 +95,7 @@ const groupSwagger = {
     },
   },
 
-  "/api/groups/{groupId}/members/{userId}/admin": {
+  "/api/groups/v1/{groupId}/members/{userId}/admin": {
     patch: {
       tags: ["Groups"],
       summary: "Make member a group admin",
@@ -108,7 +108,7 @@ const groupSwagger = {
     },
   },
 
-  "/api/groups/{groupId}/members/{userId}/remove-admin": {
+  "/api/groups/v1/{groupId}/members/{userId}/remove-admin": {
     patch: {
       tags: ["Groups"],
       summary: "Remove admin permission",
@@ -121,7 +121,7 @@ const groupSwagger = {
     },
   },
 
-  "/api/groups/{groupId}/leave": {
+  "/api/groups/v1/{groupId}/leave": {
     post: {
       tags: ["Groups"],
       summary: "Leave group",
@@ -134,7 +134,7 @@ const groupSwagger = {
     },
   },
 
-  "/api/groups/{groupId}": {
+  "/api/groups/v1/{groupId}": {
     patch: {
       tags: ["Groups"],
       summary: "Update group name / image",

@@ -12,6 +12,20 @@ export const displayPlans = async ({page, limit, search}) => {
   return plans;
 };
 
+export const getUserPlans = async ({
+  userId,
+  page,
+  limit,
+  search,
+}) => {
+  return await planRepository.getUserPlans({
+    userId,
+    page,
+    limit,
+    search,
+  });
+};
+
 export const editPlan = async (planId, data) => {
   const plan = await planRepository.getPlanById(planId);
 

@@ -9,6 +9,8 @@ import {
   updateGroupRepository,
   addGroupAdminRepository,
   removeGroupAdminRepository,
+  findActiveGroupMemberships,
+  findGroupsByIds,
 } from "../repositories/group.repository.js";
 import { uploadToCloudinary, deleteFromCloudinary } from "../utils/cloudinary.js";
 import {
@@ -62,6 +64,42 @@ const checkGroupAdmin = async (
   return member;
 };
 
+
+
+export const getMyGroupsService = async (userId) => {
+  const memberships =
+    await findActiveGroupMemberships(userId);
+
+  if (!memberships.length) {
+    return [];
+  }
+
+  const chatIds = memberships.map(
+    (membership) => membership.chatId
+  );
+
+  const groups = await findGroupsByIds(chatIds);
+
+  // Create membership lookup
+  const membershipMap = new Map(
+    memberships.map((membership) => [
+      membership.chatId.toString(),
+      membership,
+    ])
+  );
+
+  return groups.map((group) => {
+    const membership = membershipMap.get(
+      group._id.toString()
+    );
+
+    return {
+      ...group,
+      myRole: membership?.role || "member",
+      joinedAt: membership?.joinedAt || null,
+    };
+  });
+};
 
 // Get group members
 export const getGroupMembersService =

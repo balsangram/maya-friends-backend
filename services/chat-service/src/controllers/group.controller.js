@@ -10,8 +10,32 @@ import {
   removeGroupAdminService,
   leaveGroupService,
   updateGroupService,
+  getMyGroupsService,
 } from "../services/group.service.js";
 
+
+
+export const getMyGroups = async (req, res) => {
+  try {
+    const userId = req.user.id;
+
+    const groups = await getMyGroupsService(userId);
+
+    return res.status(200).json({
+      success: true,
+      count: groups.length,
+      data: groups,
+    });
+  } catch (error) {
+    console.error("Get my groups error:", error);
+
+    return res.status(500).json({
+      success: false,
+      message: "Failed to fetch groups",
+      error: error.message,
+    });
+  }
+};
 
 // Get group members
 export const getGroupMembers = asyncHandler(

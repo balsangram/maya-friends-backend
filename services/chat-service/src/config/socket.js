@@ -5,15 +5,19 @@ import { verifyAccessToken } from "../utils/jwt.js";
 let io;
 
 const getTokenFromHandshake = (socket) => {
+  // console.log("Handshake auth: --------------1", socket.handshake.auth);
   const authToken = socket.handshake.auth?.token;
+  // console.log("Auth token from handshake:---------------------2", authToken);
   if (authToken) return authToken;
 
   const header = socket.handshake.headers?.authorization;
+  console.log("Authorization header:---------------3", header);
   if (header?.startsWith("Bearer ")) {
     return header.slice(7);
   }
 
   const queryToken = socket.handshake.query?.token;
+  // console.log("Token from query:---------------4", queryToken);
   if (typeof queryToken === "string" && queryToken) {
     return queryToken;
   }
@@ -22,10 +26,16 @@ const getTokenFromHandshake = (socket) => {
 };
 
 export const initSocket = (server) => {
+  const rawOrigin = env.SOCKET_CORS_ORIGIN || env.CLIENT_URL || "*";
+  const corsOrigin =
+    rawOrigin === "*"
+      ? "*"
+      : rawOrigin.split(",").map((o) => o.trim());
+
   io = new Server(server, {
     path: "/socket.io",
     cors: {
-      origin: env.SOCKET_CORS_ORIGIN || env.CLIENT_URL || "*",
+      origin: corsOrigin,
       methods: ["GET", "POST"],
       credentials: true,
     },

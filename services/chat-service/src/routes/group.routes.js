@@ -12,11 +12,14 @@ import {
   removeGroupAdmin,
   leaveGroup,
   updateGroup,
+  getMyGroups,
 } from "../controllers/group.controller.js";
 
 const router = express.Router();
 
 router.use(authMiddleware);
+
+router.get("/v1/my-groups", getMyGroups);
 
 // Get group members
 router.get("/v1/:groupId/members", getGroupMembers);

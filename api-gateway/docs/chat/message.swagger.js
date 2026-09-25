@@ -6,7 +6,7 @@ const objectId = {
 };
 
 const messageSwagger = {
-  "/api/messages/chat/{chatId}": {
+  "/api/messages/v1/chat/{chatId}": {
     get: {
       tags: ["Messages"],
       summary: "Get messages for a chat",
@@ -36,7 +36,7 @@ const messageSwagger = {
     },
   },
 
-  "/api/messages": {
+  "/api/messages/v1": {
     post: {
       tags: ["Messages"],
       summary: "Send text or media message",
@@ -104,7 +104,7 @@ const messageSwagger = {
     },
   },
 
-  "/api/messages/{messageId}": {
+  "/api/messages/v1/{messageId}": {
     patch: {
       tags: ["Messages"],
       summary: "Edit message",
@@ -160,7 +160,7 @@ const messageSwagger = {
     },
   },
 
-  "/api/messages/{messageId}/forward": {
+  "/api/messages/v1/{messageId}/forward": {
     post: {
       tags: ["Messages"],
       summary: "Forward message to one or more chats",
@@ -200,7 +200,7 @@ const messageSwagger = {
     },
   },
 
-  "/api/messages/{messageId}/read": {
+  "/api/messages/v1/{messageId}/read": {
     patch: {
       tags: ["Messages"],
       summary: "Mark message as read",

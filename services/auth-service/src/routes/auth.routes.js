@@ -8,6 +8,8 @@ import {
   changePassword,
   sendOtp,
   verifyOtp,
+  privacyPolicy,
+  termsAndConditions,
 } from "../controllers/auth.controller.js";
 import authMiddleware from "../middlewares/auth.middleware.js";
 import authorize from "../middlewares/authorize.middleware.js";
@@ -23,5 +25,14 @@ router.post("/v1/change-password",authMiddleware,authorize("User"), changePasswo
 
 router.post("/v1/send-otp", sendOtp);
 router.post("/v1/verify-otp", verifyOtp);
+
+// ==============================
+// Legal
+// ==============================
+
+router.get("/v1/privacy-policy", privacyPolicy);
+
+router.get("/v1/terms-and-conditions", termsAndConditions);
+
 
 export default router;

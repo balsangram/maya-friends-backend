@@ -8,6 +8,7 @@ import {
   editPlan,
   deletePlan,
   getAllPlans,
+  getUserPlans,
 } from "../controllers/plan.controller.js";
 
 const router = express.Router();
@@ -35,12 +36,18 @@ router.delete(
   authorize("Admin"),
   deletePlan
 );
+router.get(
+  "/v1/user",
+  authMiddleware,
+  authorize("User"),
+  getUserPlans
+);
 
 // Display all plans
 router.get(
   "/v1",
   authMiddleware,
-  authorize("Admin","User"),
+  authorize("Admin"),
   getAllPlans
 );
 

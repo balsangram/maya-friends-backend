@@ -7,6 +7,47 @@ export const createPlan = asyncHandler(async (req, res) => {
   successResponse(res, "Plan created successfully", plan, 201);
 })
 
+export const getUserPlans = asyncHandler(async (req, res) => {
+  const {
+    page = 1,
+    limit = 10,
+    search = "",
+  } = req.query;
+
+  const currentPage = Math.max(Number(page) || 1, 1);
+  const pageLimit = Math.max(Number(limit) || 10, 1);
+
+  const result = await planService.getUserPlans({
+    userId: req.user.id,
+    page: currentPage,
+    limit: pageLimit,
+    search: String(search).trim(),
+  });
+
+  const totalPages = Math.ceil(
+    result.total / pageLimit
+  );
+
+  return res.status(200).json({
+    success: true,
+    message: "User plans retrieved successfully",
+
+    data: {
+      isSubscribed: result.isSubscribed,
+      plans: result.plans,
+    },
+
+    pagination: {
+      currentPage,
+      limit: pageLimit,
+      totalItems: result.total,
+      totalPages,
+      hasNextPage: currentPage < totalPages,
+      hasPreviousPage: currentPage > 1,
+    },
+  });
+});
+
 export const getAllPlans = asyncHandler(async (req, res) => {
   const { page = 1, limit = 10, search = "" } = req.query;
 
