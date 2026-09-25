@@ -22,7 +22,7 @@ router.post("/v1/private", createPrivateChat);
 router.post("/v1/group", upload.single("groupImage"), createGroupChat);
 
 // Get logged-in user's chats
-router.get(["/v1", "/v1/"], getUserChats);
+router.get("/v1", getUserChats);
 
 // Get particular chat
 router.get("/v1/:chatId", getChatDetails);
