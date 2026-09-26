@@ -1,3 +1,5 @@
+import { Types } from "mongoose";
+
 import {
   createPostRepository,
   deletePostRepository,
@@ -14,11 +16,60 @@ import {
 import ApiError from "../utils/ApiError.js";
 
 // ======================================================
+// Types
+// ======================================================
+
+interface Media {
+  url: string;
+  mediaId: string;
+}
+
+interface UploadedFiles {
+  images?: Express.Multer.File[];
+  videos?: Express.Multer.File[];
+}
+
+interface PostData {
+  description?: unknown;
+
+  locationLink?: unknown;
+
+  food?: unknown;
+
+  maritalStatus?: unknown;
+
+  profession?: unknown;
+
+  religion?: unknown;
+
+  genderPreference?: unknown;
+
+  minAge?: unknown;
+
+  maxAge?: unknown;
+
+  problems?: unknown;
+
+  imageMediaIds?: unknown;
+
+  videoMediaIds?: unknown;
+
+  [key: string]: unknown;
+}
+
+interface PostFilter {
+  userId?: string | Types.ObjectId;
+  isActive?: boolean;
+}
+
+// ======================================================
 // Helper: Upload Images
 // ======================================================
 
-const uploadImages = async (files = []) => {
-  const images = [];
+const uploadImages = async (
+  files: Express.Multer.File[] = []
+): Promise<Media[]> => {
+  const images: Media[] = [];
 
   for (const file of files) {
     const result = await uploadToCloudinary(
@@ -35,8 +86,14 @@ const uploadImages = async (files = []) => {
   return images;
 };
 
-const uploadVideos = async (files = []) => {
-  const videos = [];
+// ======================================================
+// Helper: Upload Videos
+// ======================================================
+
+const uploadVideos = async (
+  files: Express.Multer.File[] = []
+): Promise<Media[]> => {
+  const videos: Media[] = [];
 
   for (const file of files) {
     const result = await uploadToCloudinary(
@@ -52,11 +109,14 @@ const uploadVideos = async (files = []) => {
 
   return videos;
 };
+
 // ======================================================
 // Helper: Delete Media
 // ======================================================
 
-const deleteMedia = async (media = []) => {
+const deleteMedia = async (
+  media: Media[] = []
+): Promise<void> => {
   for (const item of media) {
     if (!item?.mediaId) {
       continue;
@@ -64,12 +124,20 @@ const deleteMedia = async (media = []) => {
 
     try {
       await deleteFromCloudinary(item.mediaId);
-    } catch (error) {
-      console.error(
-        "Cloudinary delete error:",
-        item.mediaId,
-        error.message
-      );
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        console.error(
+          "Cloudinary delete error:",
+          item.mediaId,
+          error.message
+        );
+      } else {
+        console.error(
+          "Cloudinary delete error:",
+          item.mediaId,
+          error
+        );
+      }
     }
   }
 };
@@ -79,22 +147,20 @@ const deleteMedia = async (media = []) => {
 // ======================================================
 
 export const createPostService = async (
-  userId,
-  postData = {},
-  files = {}
+  userId: string,
+  postData: PostData = {},
+  files: UploadedFiles = {}
 ) => {
-  const uploadedImages = [];
-  const uploadedVideos = [];
+  const uploadedImages: Media[] = [];
+  const uploadedVideos: Media[] = [];
 
   try {
     // ------------------------------------------
     // Upload Images
     // ------------------------------------------
 
-    if (files?.images?.length) {
-      const images = await uploadImages(
-        files.images
-      );
+    if (files.images?.length) {
+      const images = await uploadImages(files.images);
 
       uploadedImages.push(...images);
     }
@@ -103,10 +169,8 @@ export const createPostService = async (
     // Upload Videos
     // ------------------------------------------
 
-    if (files?.videos?.length) {
-      const videos = await uploadVideos(
-        files.videos
-      );
+    if (files.videos?.length) {
+      const videos = await uploadVideos(files.videos);
 
       uploadedVideos.push(...videos);
     }
@@ -123,14 +187,35 @@ export const createPostService = async (
           ? postData.description.trim()
           : "",
 
+      locationLink:
+        typeof postData.locationLink === "string"
+          ? postData.locationLink.trim()
+          : "",
+
+      food: postData.food,
+
+      maritalStatus: postData.maritalStatus,
+
+      profession: postData.profession,
+
+      religion: postData.religion,
+
+      genderPreference:
+        postData.genderPreference,
+
+      minAge: postData.minAge,
+
+      maxAge: postData.maxAge,
+
+      problems: postData.problems,
+
       images: uploadedImages,
 
       videos: uploadedVideos,
     });
 
     return post;
-
-  } catch (error) {
+  } catch (error: unknown) {
     // ------------------------------------------
     // MongoDB failed after Cloudinary upload
     // ------------------------------------------
@@ -147,10 +232,10 @@ export const createPostService = async (
 // ======================================================
 
 export const editPostService = async (
-  userId,
-  postId,
-  updateData = {},
-  files = {}
+  userId: string,
+  postId: string,
+  updateData: PostData = {},
+  files: UploadedFiles = {}
 ) => {
   // ==========================================
   // Find Post
@@ -187,14 +272,29 @@ export const editPostService = async (
     );
 
   const hasImages =
-    Array.isArray(files?.images) &&
+    Array.isArray(files.images) &&
     files.images.length > 0;
 
   const hasVideos =
-    Array.isArray(files?.videos) &&
+    Array.isArray(files.videos) &&
     files.videos.length > 0;
 
-  if (!hasDescription && !hasImages && !hasVideos) {
+  const hasOtherFields =
+    Object.keys(updateData).some(
+      (key) =>
+        ![
+          "description",
+          "imageMediaIds",
+          "videoMediaIds",
+        ].includes(key)
+    );
+
+  if (
+    !hasDescription &&
+    !hasImages &&
+    !hasVideos &&
+    !hasOtherFields
+  ) {
     throw ApiError.badRequest(
       "Please provide something to update"
     );
@@ -204,7 +304,7 @@ export const editPostService = async (
   // Prepare MongoDB Update
   // ==========================================
 
-  const postData = {};
+  const postData: Record<string, unknown> = {};
 
   // ==========================================
   // Description
@@ -226,34 +326,62 @@ export const editPostService = async (
   }
 
   // ==========================================
+  // Other Fields
+  // ==========================================
+
+  const allowedFields = [
+    "locationLink",
+    "food",
+    "maritalStatus",
+    "profession",
+    "religion",
+    "genderPreference",
+    "minAge",
+    "maxAge",
+    "problems",
+  ];
+
+  for (const field of allowedFields) {
+    if (
+      Object.prototype.hasOwnProperty.call(
+        updateData,
+        field
+      )
+    ) {
+      postData[field] = updateData[field];
+    }
+  }
+
+  // ==========================================
   // IMAGE MEDIA IDs
   // ==========================================
 
-  let imageMediaIds = [];
+  let imageMediaIds: unknown[] = [];
 
   if (hasImages) {
-    imageMediaIds = updateData.imageMediaIds;
+    let mediaIds = updateData.imageMediaIds;
 
-    if (typeof imageMediaIds === "string") {
+    if (typeof mediaIds === "string") {
       try {
-        imageMediaIds =
-          JSON.parse(imageMediaIds);
-      } catch (error) {
+        mediaIds = JSON.parse(mediaIds);
+      } catch {
         throw ApiError.badRequest(
           "imageMediaIds must be a valid JSON array"
         );
       }
     }
 
-    if (!Array.isArray(imageMediaIds)) {
+    if (!Array.isArray(mediaIds)) {
       throw ApiError.badRequest(
         "imageMediaIds must be an array"
       );
     }
 
+    imageMediaIds = mediaIds;
+
     if (
       imageMediaIds.length !==
-      files.images.length
+      files.images!.length
     ) {
       throw ApiError.badRequest(
         "Number of imageMediaIds must match number of images"
@@ -265,31 +393,32 @@ export const editPostService = async (
   // VIDEO MEDIA IDs
   // ==========================================
 
-  let videoMediaIds = [];
+  let videoMediaIds: unknown[] = [];
 
   if (hasVideos) {
-    videoMediaIds = updateData.videoMediaIds;
+    let mediaIds = updateData.videoMediaIds;
 
-    if (typeof videoMediaIds === "string") {
+    if (typeof mediaIds === "string") {
       try {
-        videoMediaIds =
-          JSON.parse(videoMediaIds);
-      } catch (error) {
+        mediaIds = JSON.parse(mediaIds);
+      } catch {
         throw ApiError.badRequest(
           "videoMediaIds must be a valid JSON array"
         );
       }
     }
 
-    if (!Array.isArray(videoMediaIds)) {
+    if (!Array.isArray(mediaIds)) {
       throw ApiError.badRequest(
         "videoMediaIds must be an array"
       );
     }
 
+    videoMediaIds = mediaIds;
+
     if (
       videoMediaIds.length !==
-      files.videos.length
+      files.videos!.length
     ) {
       throw ApiError.badRequest(
         "Number of videoMediaIds must match number of videos"
@@ -301,19 +430,16 @@ export const editPostService = async (
   // Copy Existing Media
   // ==========================================
 
-  const updatedImages = [
+  const updatedImages: Media[] = [
     ...(existingPost.images || []),
   ];
 
-  const updatedVideos = [
+  const updatedVideos: Media[] = [
     ...(existingPost.videos || []),
   ];
 
-  const oldImages = [];
-  const oldVideos = [];
-
-  const newImages = [];
-  const newVideos = [];
+  const oldImages: Media[] = [];
+  const oldVideos: Media[] = [];
 
   // ==========================================
   // Upload Multiple Images
@@ -321,43 +447,46 @@ export const editPostService = async (
 
   if (hasImages) {
     const uploadedImages =
-      await uploadImages(files.images);
+      await uploadImages(files.images!);
 
-    for (let i = 0; i < imageMediaIds.length; i++) {
-      const mediaId =
-        imageMediaIds[i]?.trim();
+    try {
+      for (
+        let i = 0;
+        i < imageMediaIds.length;
+        i++
+      ) {
+        const mediaId = String(
+          imageMediaIds[i] ?? ""
+        ).trim();
 
-      if (!mediaId) {
-        throw ApiError.badRequest(
-          `imageMediaIds[${i}] is required`
+        if (!mediaId) {
+          throw ApiError.badRequest(
+            `imageMediaIds[${i}] is required`
+          );
+        }
+
+        const imageIndex =
+          updatedImages.findIndex(
+            (image) =>
+              image.mediaId === mediaId
+          );
+
+        if (imageIndex === -1) {
+          throw ApiError.notFound(
+            `Image not found: ${mediaId}`
+          );
+        }
+
+        oldImages.push(
+          updatedImages[imageIndex]
         );
+
+        updatedImages[imageIndex] =
+          uploadedImages[i];
       }
-
-      const imageIndex =
-        updatedImages.findIndex(
-          (image) =>
-            image.mediaId === mediaId
-        );
-
-      if (imageIndex === -1) {
-        throw ApiError.notFound(
-          `Image not found: ${mediaId}`
-        );
-      }
-
-      // Save old image
-      oldImages.push(
-        updatedImages[imageIndex]
-      );
-
-      // Save new image
-      newImages.push(
-        uploadedImages[i]
-      );
-
-      // Replace image
-      updatedImages[imageIndex] =
-        uploadedImages[i];
+    } catch (error: unknown) {
+      await deleteMedia(uploadedImages);
+      throw error;
     }
 
     postData.images = updatedImages;
@@ -369,43 +498,46 @@ export const editPostService = async (
 
   if (hasVideos) {
     const uploadedVideos =
-      await uploadVideos(files.videos);
+      await uploadVideos(files.videos!);
 
-    for (let i = 0; i < videoMediaIds.length; i++) {
-      const mediaId =
-        videoMediaIds[i]?.trim();
+    try {
+      for (
+        let i = 0;
+        i < videoMediaIds.length;
+        i++
+      ) {
+        const mediaId = String(
+          videoMediaIds[i] ?? ""
+        ).trim();
 
-      if (!mediaId) {
-        throw ApiError.badRequest(
-          `videoMediaIds[${i}] is required`
+        if (!mediaId) {
+          throw ApiError.badRequest(
+            `videoMediaIds[${i}] is required`
+          );
+        }
+
+        const videoIndex =
+          updatedVideos.findIndex(
+            (video) =>
+              video.mediaId === mediaId
+          );
+
+        if (videoIndex === -1) {
+          throw ApiError.notFound(
+            `Video not found: ${mediaId}`
+          );
+        }
+
+        oldVideos.push(
+          updatedVideos[videoIndex]
         );
+
+        updatedVideos[videoIndex] =
+          uploadedVideos[i];
       }
-
-      const videoIndex =
-        updatedVideos.findIndex(
-          (video) =>
-            video.mediaId === mediaId
-        );
-
-      if (videoIndex === -1) {
-        throw ApiError.notFound(
-          `Video not found: ${mediaId}`
-        );
-      }
-
-      // Save old video
-      oldVideos.push(
-        updatedVideos[videoIndex]
-      );
-
-      // Save new video
-      newVideos.push(
-        uploadedVideos[i]
-      );
-
-      // Replace video
-      updatedVideos[videoIndex] =
-        uploadedVideos[i];
+    } catch (error: unknown) {
+      await deleteMedia(uploadedVideos);
+      throw error;
     }
 
     postData.videos = updatedVideos;
@@ -445,14 +577,15 @@ export const editPostService = async (
 
   return updatedPost;
 };
+
 // ======================================================
 // DELETE POST
 // ======================================================
 
 export const deletePostService = async (
-  userId,
-  postId
-) => {
+  userId: string,
+  postId: string
+): Promise<boolean> => {
   // ------------------------------------------
   // Find Post
   // ------------------------------------------
@@ -490,7 +623,7 @@ export const deletePostService = async (
   // ------------------------------------------
 
   await deleteMedia(
-    existingPost.images
+    existingPost.images || []
   );
 
   // ------------------------------------------
@@ -498,7 +631,7 @@ export const deletePostService = async (
   // ------------------------------------------
 
   await deleteMedia(
-    existingPost.videos
+    existingPost.videos || []
   );
 
   return true;
@@ -508,13 +641,18 @@ export const deletePostService = async (
 // DISPLAY POSTS
 // ======================================================
 
+export type PostType =
+  | "my"
+  | "all"
+  | "friends";
+
 export const displayPostsService = async (
-  userId,
-  type,
-  page,
-  limit
+  userId: string,
+  type: PostType,
+  page: number,
+  limit: number
 ) => {
-  let filter = {};
+  let filter: PostFilter = {};
 
   // ------------------------------------------
   // My Posts
@@ -546,8 +684,7 @@ export const displayPostsService = async (
   // Pagination
   // ------------------------------------------
 
-  const skip =
-    (page - 1) * limit;
+  const skip = (page - 1) * limit;
 
   return await findPostsRepository(
     filter,

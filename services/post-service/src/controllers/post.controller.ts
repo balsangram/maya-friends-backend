@@ -3,23 +3,25 @@ import {
   deletePostService,
   displayPostsService,
   editPostService,
-} from "../services/post.services.js";
+} from "../services/post.services.ts";
 
-import asyncHandler from "../utils/asyncHandler.js";
+import asyncHandler from "../utils/asyncHandler.ts";
 
-import ApiError from "../utils/ApiError.js";
+import ApiError from "../utils/ApiError.ts";
 
 import {
   getPagination,
   paginationResponse,
   successResponse,
-} from "../utils/response.js";
+} from "../utils/response.ts";
+
+import { Request, Response } from "express";
 
 // ==============================
 // Create Post
 // ==============================
 
-export const createPost = asyncHandler(async (req, res) => {
+export const createPost = asyncHandler(async (req: Request, res: Response) => {
   const userId = req.user.id;
 
   await createPostService(
@@ -40,7 +42,7 @@ export const createPost = asyncHandler(async (req, res) => {
 // Edit Post
 // ==============================
 
-export const editPost = asyncHandler(async (req, res) => {
+export const editPost = asyncHandler(async (req: Request, res: Response) => {
   const userId = req.user.id;
   const { postId } = req.params;
 
@@ -65,7 +67,7 @@ export const editPost = asyncHandler(async (req, res) => {
 // Delete Post
 // ==============================
 
-export const deletePost = asyncHandler(async (req, res) => {
+export const deletePost = asyncHandler(async (req: Request, res: Response) => {
   const userId = req.user.id;
 
   const { postId } = req.params;
@@ -87,7 +89,7 @@ export const deletePost = asyncHandler(async (req, res) => {
 // Display Posts
 // ==============================
 
-export const displayPosts = asyncHandler(async (req, res) => {
+export const displayPosts = asyncHandler(async (req: Request, res: Response) => {
   const userId = req.user.id;
 
   const {
@@ -102,16 +104,16 @@ export const displayPosts = asyncHandler(async (req, res) => {
     "friends",
   ];
 
-  if (!allowedTypes.includes(type)) {
+  if (!allowedTypes.includes(type as string)) {
     throw new ApiError(
       400,
-      "Invalid type. Use my, all or friends"
+      "Invalid type. Use my, all or friends" 
     );
   }
 
   const pagination = getPagination(
-    page,
-    limit
+    page as number,
+    limit as number
   );
 
   const {

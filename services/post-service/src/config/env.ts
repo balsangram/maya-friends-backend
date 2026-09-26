@@ -1,22 +1,23 @@
 import dotenv from "dotenv";
-import path from "path";
-import { fileURLToPath } from "url";
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-
-dotenv.config({ path: path.resolve(__dirname, "../../.env") });
-dotenv.config({ path: path.resolve(__dirname, "../../../../.env") });
 dotenv.config();
+
+const getRequiredEnvVar = (key: string): string => {
+  const value = process.env[key];
+  if (!value) {
+    throw new Error(`Missing required environment variable: ${key}`);
+  }
+  return value;
+}
 
 const env = {
   NODE_ENV: process.env.NODE_ENV || "development",
   PORT: process.env.AUTH_SERVICE_PORT || process.env.PORT || 7001,
-  MONGO_URI: process.env.AUTH_MONGO_URI || process.env.MONGO_URI,
+  MONGO_URI: process.env.AUTH_MONGO_URI || process.env.MONGO_URI || getRequiredEnvVar("MONGO_URI"),
   CLIENT_URL: process.env.CLIENT_URL,
-  ACCESS_TOKEN_SECRET: process.env.ACCESS_TOKEN_SECRET,
+  ACCESS_TOKEN_SECRET: process.env.ACCESS_TOKEN_SECRET || getRequiredEnvVar("ACCESS_TOKEN_SECRET"),
   ACCESS_TOKEN_EXPIRES_IN: process.env.ACCESS_TOKEN_EXPIRES_IN || "1h",
-  REFRESH_TOKEN_SECRET: process.env.REFRESH_TOKEN_SECRET,
+  REFRESH_TOKEN_SECRET: process.env.REFRESH_TOKEN_SECRET || getRequiredEnvVar("REFRESH_TOKEN_SECRET"),
   REFRESH_TOKEN_EXPIRES_IN: process.env.REFRESH_TOKEN_EXPIRES_IN || "7d",
   ADMIN_NAME: process.env.ADMIN_NAME,
   ADMIN_EMAIL: process.env.ADMIN_EMAIL,

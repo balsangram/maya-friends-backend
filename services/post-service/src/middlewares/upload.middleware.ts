@@ -1,10 +1,10 @@
-import multer from "multer";
-
+import  multer from "multer";
+import type { Request } from "express";
 // Use memory storage so no files are written to local disk
 const storage = multer.memoryStorage();
 
 // File Filter for all supported media types
-const fileFilter = (req, file, cb) => {
+const fileFilter = (req: Request, file: Express.Multer.File, cb: multer.FileFilterCallback) => {
   const allowedMimeTypes = [
     // Images
     "image/jpeg",

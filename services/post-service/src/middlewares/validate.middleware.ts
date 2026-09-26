@@ -1,5 +1,6 @@
-const validate = (schema) => {
-  return (req, res, next) => {
+import type { Request, Response, NextFunction } from "express";
+const validate = (schema: any) => {
+  return (req: Request, res: Response, next: NextFunction) => {
     const { error, value } = schema.validate(req.body, {
       abortEarly: false,
       stripUnknown: true,
@@ -10,7 +11,7 @@ const validate = (schema) => {
         success: false,
         message: "Validation failed",
         errors: error.details.map(
-          (item) => item.message
+          (item: any) => item.message
         ),
       });
     }

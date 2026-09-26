@@ -1,10 +1,11 @@
-import Post from "../models/post.model.js";
+
+import Post from "../models/post.model.ts";
 
 // ==============================
 // Create Post
 // ==============================
 
-export const createPostRepository = async (postData) => {
+export const createPostRepository = async (postData: any) => {
   return await Post.create(postData);
 };
 
@@ -12,7 +13,7 @@ export const createPostRepository = async (postData) => {
 // Find Post By ID
 // ==============================
 
-export const findPostByIdRepository = async (postId) => {
+export const findPostByIdRepository = async (postId: string) => {
   return await Post.findById(postId);
 };
 
@@ -21,8 +22,8 @@ export const findPostByIdRepository = async (postId) => {
 // ==============================
 
 export const updatePostRepository = async (
-  postId,
-  updateData
+  postId: string,
+  updateData: any
 ) => {
   return await Post.findOneAndUpdate(
     {
@@ -42,7 +43,7 @@ export const updatePostRepository = async (
 // Delete Post
 // ==============================
 
-export const deletePostRepository = async (postId) => {
+export const deletePostRepository = async (postId: string) => {
   return await Post.findByIdAndDelete(postId);
 };
 
@@ -51,7 +52,7 @@ export const deletePostRepository = async (postId) => {
 // ==============================
 
 export const findPostsRepository = async (
-  filter = {},
+  filter: any = {},
   skip = 0,
   limit = 10
 ) => {

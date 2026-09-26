@@ -1,8 +1,8 @@
 import express from "express";
 
-import authMiddleware from "../middlewares/auth.middleware.js";
-import authorize from "../middlewares/authorize.middleware.js";
-import upload from "../middlewares/upload.middleware.js";
+import authMiddleware from "../middlewares/auth.middleware.ts";
+import authorize from "../middlewares/authorize.middleware.ts";
+import upload from "../middlewares/upload.middleware.ts";
 
 import {
   createPost,

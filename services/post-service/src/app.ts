@@ -1,9 +1,9 @@
-import express from "express";
+import express ,{Request , Response ,NextFunction} from "express";
 
-import corsMiddleware from "./middlewares/cors.middleware.js";
-import postRoutes from "./routes/post.routes.js";
-import ApiError from "./utils/ApiError.js";
-import errorMiddleware from "./middlewares/error.middleware.js";
+import corsMiddleware from "./middlewares/cors.middleware.ts";
+import postRoutes from "./routes/post.routes.ts";
+import ApiError from "./utils/ApiError.ts";
+import errorMiddleware from "./middlewares/error.middleware.ts";
 
 const app = express();
 
@@ -20,7 +20,7 @@ app.use(express.urlencoded({ extended: true }));
    Health Check
 ============================== */
 
-app.get("/post/health", (req, res) => {
+app.get("/post/health", (req : Request, res : Response) => {
   res.json({
     success: true,
     message: "Post Service API is running",
@@ -37,7 +37,7 @@ app.use("/api/post", postRoutes);
    404 Handler
 ============================== */
 
-app.use((req, res, next) => {
+app.use((req: Request, res : Response, next : NextFunction) => {
   next(ApiError.notFound(`Cannot ${req.method} ${req.originalUrl}`));
 });
 

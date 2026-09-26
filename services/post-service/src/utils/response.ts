@@ -1,12 +1,13 @@
+import type { Request, Response } from "express";
 import ApiError, { ErrorResponse } from "./ApiError.js";
 
 export { ApiError, ErrorResponse };
 
 export const successResponse = (
-  res,
-  message,
-  data = null,
-  statusCode = 200
+  res: Response,
+  message: string,
+  data: any = null,
+  statusCode: number = 200
 ) => {
   return res.status(statusCode).json({
     success: true,
@@ -27,13 +28,13 @@ export const getPagination = (page = 1, limit = 10) => {
 };
 
 export const paginationResponse = (
-  res,
-  message,
-  data,
-  page,
-  limit,
-  total,
-  statusCode = 200
+  res: Response,
+  message: string,
+  data: any,
+  page: number,
+  limit: number,
+  total: number,
+  statusCode: number = 200
 ) => {
   const totalPages = Math.ceil(total / limit);
 

@@ -1,6 +1,76 @@
-import mongoose from "mongoose";
+import mongoose, {
+  Document,
+  Model,
+  Schema,
+  Types,
+} from "mongoose";
 
-const mediaSchema = new mongoose.Schema(
+// ==============================
+// Media Type
+// ==============================
+
+export interface IMedia {
+  url: string;
+  mediaId: string;
+}
+
+// ==============================
+// Post Type
+// ==============================
+
+export interface IPost {
+  userId: Types.ObjectId;
+
+  description: string;
+
+  locationLink: string;
+
+  food: "veg" | "nonveg" | "all";
+
+  maritalStatus: "married" | "unmarried" | "all";
+
+  profession: "job" | "student" | "all";
+
+  religion:
+    | "hindu"
+    | "christian"
+    | "muslim"
+    | "sikh"
+    | "buddhist"
+    | "jain"
+    | "other"
+    | "all";
+
+  genderPreference: "girl" | "boy" | "both";
+
+  minAge: number;
+
+  maxAge: number;
+
+  problems: string[];
+
+  images: IMedia[];
+
+  videos: IMedia[];
+
+  isActive: boolean;
+
+  createdAt?: Date;
+
+  updatedAt?: Date;
+}
+
+// ==============================
+// Post Document
+// ==============================
+
+export interface IPostDocument extends IPost, Document {}
+
+// ==============================
+// Media Schema
+// ==============================
+
+const mediaSchema = new Schema<IMedia>(
   {
     url: {
       type: String,
@@ -17,10 +87,14 @@ const mediaSchema = new mongoose.Schema(
   }
 );
 
-const postSchema = new mongoose.Schema(
+// ==============================
+// Post Schema
+// ==============================
+
+const postSchema = new Schema<IPostDocument>(
   {
     userId: {
-      type: mongoose.Schema.Types.ObjectId,
+      type: Schema.Types.ObjectId,
       required: true,
       index: true,
     },
@@ -32,35 +106,30 @@ const postSchema = new mongoose.Schema(
       maxlength: 5000,
     },
 
-    // Google Maps / location link
     locationLink: {
       type: String,
       default: "",
       trim: true,
     },
 
-    // Food preference
     food: {
       type: String,
       enum: ["veg", "nonveg", "all"],
       default: "all",
     },
 
-    // Marital status preference
     maritalStatus: {
       type: String,
       enum: ["married", "unmarried", "all"],
       default: "all",
     },
 
-    // Profession preference
     profession: {
       type: String,
       enum: ["job", "student", "all"],
       default: "all",
     },
 
-    // Religion preference
     religion: {
       type: String,
       enum: [
@@ -76,14 +145,12 @@ const postSchema = new mongoose.Schema(
       default: "all",
     },
 
-    // Gender preference
     genderPreference: {
       type: String,
       enum: ["girl", "boy", "both"],
       default: "both",
     },
 
-    // Minimum age preference
     minAge: {
       type: Number,
       min: 18,
@@ -91,7 +158,6 @@ const postSchema = new mongoose.Schema(
       default: 18,
     },
 
-    // Maximum age preference
     maxAge: {
       type: Number,
       min: 18,
@@ -99,7 +165,6 @@ const postSchema = new mongoose.Schema(
       default: 100,
     },
 
-    // Lifestyle / restrictions
     problems: {
       type: [String],
       default: [],
@@ -125,6 +190,12 @@ const postSchema = new mongoose.Schema(
   }
 );
 
-const Post = mongoose.model("Post", postSchema);
+// ==============================
+// Model
+// ==============================
+
+const Post: Model<IPostDocument> = mongoose.model<
+  IPostDocument
+>("Post", postSchema);
 
 export default Post;

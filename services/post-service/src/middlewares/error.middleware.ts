@@ -1,7 +1,8 @@
+import { Request, Response, NextFunction } from "express";
 import env from "../config/env.js";
 import logger from "../utils/logger.js";
 
-const errorMiddleware = (error, req, res, next) => {
+const errorMiddleware = (error: any, req: Request, res: Response, next: NextFunction) => {
   let statusCode = error.statusCode || 500;
   let message = error.message || "Internal server error";
   let errors = error.errors || [];
