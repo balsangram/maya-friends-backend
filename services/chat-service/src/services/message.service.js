@@ -1,0 +1,530 @@
+import mongoose from "mongoose";
+
+import {
+  createMessageRepository,
+  findMessageByIdRepository,
+  getChatMessagesRepository,
+  updateMessageRepository,
+  softDeleteMessageRepository,
+  markMessageReadRepository,
+} from "../repositories/message.repository.js";
+
+import {
+  findChatByIdRepository,
+  isChatParticipantRepository,
+  updateLastMessageRepository,
+} from "../repositories/chat.repository.js";
+import { getIO } from "../config/socket.js";
+import ApiError from "../utils/ApiError.js";
+import { enrichMessagesWithUsers } from "../utils/enrichUsers.js";
+
+
+// ============================================
+// VALIDATE MONGODB ID
+// ============================================
+
+const validateId = (id, name) => {
+  if (!id || !mongoose.Types.ObjectId.isValid(id)) {
+    throw ApiError.badRequest(`Invalid ${name}`);
+  }
+};
+
+
+// ============================================
+// CHECK CHAT ACCESS
+// ============================================
+
+const validateChatAccess = async (chatId, userId) => {
+  validateId(chatId, "chatId");
+  validateId(userId, "userId");
+
+  const chat = await findChatByIdRepository(chatId);
+
+  if (!chat) {
+    throw ApiError.notFound("Chat not found");
+  }
+
+  if (!chat.isActive) {
+    throw ApiError.badRequest("Chat is inactive");
+  }
+
+  const allowed = await isChatParticipantRepository(
+    chatId,
+    userId
+  );
+
+  if (!allowed) {
+    throw ApiError.forbidden("You are not a member of this chat");
+  }
+
+  return chat;
+};
+
+
+// ============================================
+// SOCKET
+// ============================================
+
+const emitToChat = (chatId, event, data) => {
+  try {
+    const io = getIO();
+    io.to(`chat:${chatId}`).emit(event, data);
+  } catch (error) {
+    // Socket emit should not fail HTTP request if socket is not connected
+    console.warn("Socket emission error:", error.message);
+  }
+};
+
+
+// ============================================
+// SEND MESSAGE
+// ============================================
+
+export const sendMessageService = async (
+  senderId,
+  payload
+) => {
+  validateId(senderId, "senderId");
+
+  const {
+    chatId,
+    messageType = "text",
+    message = "",
+    media = null,
+    replyTo = null,
+  } = payload;
+
+  validateId(chatId, "chatId");
+
+  await validateChatAccess(chatId, senderId);
+
+  const allowedMessageTypes = [
+    "text",
+    "image",
+    "video",
+    "audio",
+    "file",
+  ];
+
+  if (!allowedMessageTypes.includes(messageType)) {
+    throw ApiError.badRequest("Invalid message type");
+  }
+
+  if (messageType === "text" && !message.trim()) {
+    throw ApiError.badRequest("Message is required");
+  }
+
+  if (
+    ["image", "video", "audio", "file"].includes(
+      messageType
+    ) &&
+    !media?.url
+  ) {
+    throw ApiError.badRequest("Media URL is required");
+  }
+
+  // Sanitize replyTo (handles empty string, "null", "undefined", null, undefined)
+  let cleanReplyTo = null;
+  if (
+    replyTo !== null &&
+    replyTo !== undefined &&
+    replyTo !== "" &&
+    replyTo !== "null" &&
+    replyTo !== "undefined"
+  ) {
+    const replyStr = typeof replyTo === "object" ? replyTo.toString() : String(replyTo).trim();
+    if (replyStr && replyStr !== "null" && replyStr !== "undefined") {
+      cleanReplyTo = replyStr;
+    }
+  }
+
+  // Validate reply if provided
+  if (cleanReplyTo) {
+    validateId(cleanReplyTo, "replyTo");
+
+    const replyMessage =
+      await findMessageByIdRepository(cleanReplyTo);
+
+    if (!replyMessage) {
+      throw ApiError.notFound("Reply message not found");
+    }
+
+    const replyChatId =
+      replyMessage.chatId?._id ||
+      replyMessage.chatId;
+
+    if (
+      replyChatId.toString() !==
+      chatId.toString()
+    ) {
+      throw ApiError.badRequest(
+        "Reply message must belong to the same chat"
+      );
+    }
+  }
+
+  const newMessage =
+    await createMessageRepository({
+      chatId,
+      senderId,
+      messageType,
+      message:
+        messageType === "text"
+          ? message.trim()
+          : message,
+      media,
+      replyTo: cleanReplyTo,
+      readBy: [senderId],
+    });
+
+  // Update last message
+  await updateLastMessageRepository(
+    chatId,
+    newMessage._id
+  );
+
+  const populated =
+    await findMessageByIdRepository(
+      newMessage._id
+    );
+
+  if (!populated) {
+    throw ApiError.internal(
+      "Failed to fetch created message"
+    );
+  }
+
+  const enriched = await enrichMessagesWithUsers(populated);
+
+  // Notify chat users
+  emitToChat(
+    chatId,
+    "new_message",
+    enriched
+  );
+
+  return enriched;
+};
+
+
+// ============================================
+// GET CHAT MESSAGES
+// ============================================
+
+export const getChatMessagesService = async (
+  userId,
+  chatId,
+  page = 1,
+  limit = 20
+) => {
+  validateId(userId, "userId");
+  validateId(chatId, "chatId");
+
+  await validateChatAccess(
+    chatId,
+    userId
+  );
+
+  page = Number(page);
+  limit = Number(limit);
+
+  if (page < 1) {
+    page = 1;
+  }
+
+  if (limit < 1 || limit > 100) {
+    limit = 20;
+  }
+
+  return enrichMessagesWithUsers(
+    await getChatMessagesRepository(
+      chatId,
+      page,
+      limit
+    )
+  );
+};
+
+
+// ============================================
+// EDIT MESSAGE
+// ============================================
+
+export const editMessageService = async (
+  userId,
+  messageId,
+  text
+) => {
+  validateId(userId, "userId");
+  validateId(messageId, "messageId");
+
+  if (!text?.trim()) {
+    throw ApiError.badRequest(
+      "Message text is required"
+    );
+  }
+
+  const message =
+    await findMessageByIdRepository(
+      messageId
+    );
+
+  if (!message) {
+    throw ApiError.notFound(
+      "Message not found"
+    );
+  }
+
+  const senderId =
+    message.senderId?._id ||
+    message.senderId;
+
+  if (
+    senderId.toString() !==
+    userId.toString()
+  ) {
+    throw ApiError.forbidden(
+      "You can edit only your own message"
+    );
+  }
+
+  if (message.isDeleted) {
+    throw ApiError.badRequest(
+      "Deleted message cannot be edited"
+    );
+  }
+
+  const updated =
+    await updateMessageRepository(
+      messageId,
+      {
+        message: text.trim(),
+        isEdited: true,
+        editedAt: new Date(),
+      }
+    );
+
+  const chatId =
+    message.chatId?._id ||
+    message.chatId;
+
+  emitToChat(
+    chatId,
+    "message_updated",
+    updated
+  );
+
+  return enrichMessagesWithUsers(updated);
+};
+
+
+// ============================================
+// DELETE MESSAGE
+// ============================================
+
+export const deleteMessageService = async (
+  userId,
+  messageId
+) => {
+  validateId(userId, "userId");
+  validateId(messageId, "messageId");
+
+  const message =
+    await findMessageByIdRepository(
+      messageId
+    );
+
+  if (!message) {
+    throw ApiError.notFound(
+      "Message not found"
+    );
+  }
+
+  const senderId =
+    message.senderId?._id ||
+    message.senderId;
+
+  if (
+    senderId.toString() !==
+    userId.toString()
+  ) {
+    throw ApiError.forbidden(
+      "You can delete only your own message"
+    );
+  }
+
+  if (message.isDeleted) {
+    throw ApiError.badRequest(
+      "Message is already deleted"
+    );
+  }
+
+  const deleted =
+    await softDeleteMessageRepository(
+      messageId
+    );
+
+  const chatId =
+    message.chatId?._id ||
+    message.chatId;
+
+  emitToChat(
+    chatId,
+    "message_deleted",
+    {
+      messageId,
+      chatId,
+    }
+  );
+
+  return deleted;
+};
+
+
+// ============================================
+// FORWARD MESSAGE
+// ============================================
+
+export const forwardMessageService = async (
+  senderId,
+  messageId,
+  chatIds
+) => {
+  validateId(senderId, "senderId");
+  validateId(messageId, "messageId");
+
+  if (
+    !Array.isArray(chatIds) ||
+    chatIds.length === 0
+  ) {
+    throw ApiError.badRequest(
+      "At least one chat is required"
+    );
+  }
+
+  const original =
+    await findMessageByIdRepository(
+      messageId
+    );
+
+  if (!original) {
+    throw ApiError.notFound(
+      "Original message not found"
+    );
+  }
+
+  if (original.isDeleted) {
+    throw ApiError.badRequest(
+      "Deleted message cannot be forwarded"
+    );
+  }
+
+  const uniqueChatIds = [
+    ...new Set(
+      chatIds.map((id) => id.toString())
+    ),
+  ];
+
+  const forwardedMessages = [];
+
+  for (const chatId of uniqueChatIds) {
+    validateId(chatId, "chatId");
+
+    await validateChatAccess(
+      chatId,
+      senderId
+    );
+
+    const created =
+      await createMessageRepository({
+        chatId,
+        senderId,
+        messageType:
+          original.messageType,
+        message:
+          original.message || "",
+        media:
+          original.media || null,
+        isForwarded: true,
+        forwardedFrom:
+          original._id,
+        readBy: [senderId],
+      });
+
+    await updateLastMessageRepository(
+      chatId,
+      created._id
+    );
+
+    const populated =
+      await findMessageByIdRepository(
+        created._id
+      );
+
+    if (populated) {
+      const enriched = await enrichMessagesWithUsers(populated);
+
+      forwardedMessages.push(
+        enriched
+      );
+
+      emitToChat(
+        chatId,
+        "new_message",
+        enriched
+      );
+    }
+  }
+
+  return forwardedMessages;
+};
+
+
+// ============================================
+// MARK MESSAGE AS READ
+// ============================================
+
+export const markMessageAsReadService = async (
+  userId,
+  messageId
+) => {
+  validateId(userId, "userId");
+  validateId(messageId, "messageId");
+
+  const message =
+    await findMessageByIdRepository(
+      messageId
+    );
+
+  if (!message) {
+    throw ApiError.notFound(
+      "Message not found"
+    );
+  }
+
+  const chatId =
+    message.chatId?._id ||
+    message.chatId;
+
+  await validateChatAccess(
+    chatId,
+    userId
+  );
+
+  const updated =
+    await markMessageReadRepository(
+      messageId,
+      userId
+    );
+
+  emitToChat(
+    chatId,
+    "message_read",
+    {
+      messageId,
+      userId,
+    }
+  );
+
+  return updated;
+};

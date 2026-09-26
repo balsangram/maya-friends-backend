@@ -1,0 +1,18 @@
+[core]
+	repositoryformatversion = 0
+	filemode = true
+	bare = false
+	logallrefupdates = true
+[remote "origin"]
+	url = git@github.com:balsangram/maya-friends-backend.git
+	fetch = +refs/heads/*:refs/remotes/origin/*
+[branch "microservices-migration"]
+	remote = origin
+	merge = refs/heads/microservices-migration
+[branch "sangram"]
+	vscode-merge-base = origin/microservices-migration
+	remote = origin
+	merge = refs/heads/sangram
+[branch "main"]
+	remote = origin
+	merge = refs/heads/main
